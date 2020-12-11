@@ -32,13 +32,13 @@ def get_time_constraint(fct_date, fct_time):
     Create an iris.Constraint to select a time specified by initial forecast
     date and forecast time in hours.
 
-    Arguments:
-    fct_date : Initial date of forecast, as datetime.datetime or string
-               formatted as:
-                   YYYYMMDDThhmmZ
-               For example:
-                   20201202T0000Z
-    fct_time : Required forecast time in hours.
+    Args:
+        fct_date: Initial date of forecast, as datetime.datetime or string
+    formatted as YYYYMMDDThhmmZ, for example: 20201202T0000Z
+        fct_time: Required forecast time in hours
+
+    Returns:
+        iris.Constraint object for the specified time constraint
     """
 
     if isinstance(fct_date, dt):

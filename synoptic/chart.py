@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""chart.py
-.. module:: SWIFTsynoptic
-    :synopis: SWIFT automated synoptic charts
+"""SWIFT automated synoptic charts
 
-.. moduleauthor: Tamora D. James <t.d.james1@leeds.ac.uk>, CEMAC (UoL)
+This module was developed by CEMAC as part of the GCRF African Swift
+Project. This script allow automated plotting of synoptic features
+across African domains.
 
-.. description: This module was developed by CEMAC as part of the GCRF
-African Swift Project. This script allow automated plotting of
-synoptic features across African domains.
-   :copyright: © 2020 University of Leeds.
-   :license: MIT
+.. module:: chart
+   :synopsis: SWIFT automated synoptic charts
 
-Example:
-    To use::
+.. moduleauthor:: Tamora D. James <t.d.james1@leeds.ac.uk>, CEMAC (UoL)
+
+:copyright: © 2020 University of Leeds.
+:license: GPL 3.0 (see LICENSE)
+
+Example::
         ./chart.py <domain> <forecast_timestamp> <forecast_hour> [<chart_type>]
 
         <domain> Domain specified as standardised domain name (WA or
