@@ -3,7 +3,7 @@
 """SWIFT automated synoptic charts
 
 This module was developed by CEMAC as part of the GCRF African Swift
-Project. This script allow automated plotting of synoptic features
+Project. This script allows automated plotting of synoptic features
 across African domains.
 
 .. module:: chart
@@ -25,7 +25,7 @@ Example::
         <forecast_hour> Forecast hour as non-negative integer multiple
                  of 3 (max 72)
 
-        <chart_type> Chart type (low, mid or high)
+        <chart_type> Chart type (low, jets, conv or synth)
 
 """
 from __future__ import (absolute_import, division, print_function)
@@ -248,6 +248,14 @@ class SynopticChart:
         return (fig, ax)
 
 class LowLevelChart(SynopticChart):
+    """Low-level chart displaying windspeed, streamlines, ITD based on
+    dewpoint temperature, mean sea level pressure and pressure
+    tendency.
+
+    Note that this chart has been developed for West Africa. Extension
+    to other domains may require some adjustments.
+
+    """
 
     def __init__(self, domain, fct_timestamp, fct_hour, data_dir=None):
         super().__init__(domain, fct_timestamp, fct_hour, data_dir)
@@ -268,6 +276,28 @@ class LowLevelChart(SynopticChart):
 
         # Windspeed at 10m, 15 m/s contour
         self.wc_10m = WindHeightLevel(self, 10)
+
+class WAJetsWaves(SynopticChart):
+    """Chart displaying jets and waves for West Africa.
+
+    Features to be plotted:
+    * AEJ
+    * STJ
+    * TEJ
+    * AEW troughs and ridges
+    * PW* or Monsoon depth (to be renamed moisture depth) MD as filled contours
+    * Monsoon trough [but this might be too difficult in practice]
+    * Cyclonic centres at 850 hPa and 700/600 hPa level.
+    * Possibly, dry air boundaries.
+
+    """
+
+    def __init__(self, domain, fct_timestamp, fct_hour, data_dir=None):
+        super().__init__(domain, fct_timestamp, fct_hour, data_dir)
+
+        self.chart_type = "WA-jets-waves"
+
+        self.aej = AfricanEasterlyJet(self)
 
 class SynopticComponent:
     """ Synoptic chart component """
@@ -619,19 +649,86 @@ class WindHeightLevel(WindComponent):
                          levels = self.ws_level,
                          **self.options)
 
-# class Template(SynopticComponent):
+class AfricanEasterlyJet(WindComponent):
 
-#     def __init__(self, chart):
-#         super().__init__(chart)
+    def __init__(self, chart, level=600):
+        super().__init__(chart, level)
 
-#     def init(self):
-#         self.name = "Name"
-#         self.gfs_var = SynopticComponent.GFS_VARS['code']
-#         self.units = None
+    def init(self):
+        self.name = "African Easterly Jet"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
 
-#     def plot(self, ax):
-#         pass
+        self.plot_ws = True
+        self.plot_strm = True
 
+        self.min_ws = 0
+        self.max_ws = 25
+        self.thres_ws = 10
+
+        self.cm_name = 'Greens'
+
+        # TODO create a util function to create the colour map
+        # get_masked_colormap(name, min, max)
+        cmap_hi = mcm.get_cmap(self.cm_name, 512)
+        cmap = mc.ListedColormap(cmap_hi(np.linspace(0.1, 1.0, 256)),
+                                 name=self.cm_name)
+        cmap = cmap(np.linspace(0,1,256))
+        cmap[:round(self.thres_ws/self.max_ws*256), :] = np.array([1, 1, 1, 1])
+
+        # Formatting options
+        self.ws_options = {
+            'alpha': 0.4,
+            'cmap': mc.ListedColormap(cmap),
+        }
+
+        self.strm_options = {
+            'color': 'green',
+            # 'cmap': cmap,
+            'linewidth': 0.8,
+            'arrowsize': 1.9,
+            'arrowstyle': '->',
+            # 'norm': cnorm,
+        }
+
+    def plot(self, ax):
+
+        U, V, windspeed = self.get_wind_components()
+
+        if self.plot_ws:
+            # Plot windspeed contours
+            ctr = ax.contourf(self.lon, self.lat, windspeed,
+                              **self.ws_options)
+
+        if self.plot_strm:
+            # Plot streamlines connecting maximum wind location
+
+            # mask to relevant region i.e. between 10-15 deg N
+            lat_grid = np.meshgrid(self.lon, self.lat)[1]
+            mask = (lat_grid < 5) | (lat_grid > 20)
+
+            # find max windspeed for the relevant region
+            ws_masked = np.ma.masked_where(mask, windspeed)
+            max_ws = np.amax(ws_masked)
+
+            # select seed points
+            seed_index = np.argwhere(ws_masked > max_ws*0.85)
+            seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]] for x in seed_index])
+
+            # mask U, V to mask streamlines outside this area
+            mask = ws_masked < self.thres_ws
+            # U = np.ma.array(U, mask=mask)
+            # V = np.ma.array(V, mask=mask)
+            U[mask] = np.nan
+            V[mask] = np.nan
+
+            strm = ax.streamplot(self.lon, self.lat, U, V,
+                                 start_points=seed_points,
+                                 **self.strm_options)
+
+            # TODO add arrowheads as quiver plot
+            # ax.quiver(ax, ay, vx, vy, ...)
 
 # class Template(SynopticComponent):
 
@@ -666,9 +763,9 @@ def parse_args():
                         multiple of 3 (max 72)''')
 
     parser.add_argument('chart_type', nargs='?', type=str,
-                        metavar="chart_type", choices=["low", "mid", "high"],
+                        metavar="chart_type", choices=["low", "jets", "conv", "synth"],
                         default="low",
-                        help='''Chart type (low, mid or high)''')
+                        help='''Chart type (low, jets, conv or synth)''')
 
     pa = parser.parse_args()
 
@@ -680,10 +777,12 @@ def main():
 
     if chart_type == "low":
         chart = LowLevelChart(domain, timestamp, hour)
-    elif chart_type == "mid":
-        chart = MidLevelChart(domain, timestamp, hour)
-    elif chart_type == "high":
-        chart = HighLevelChart(domain, timestamp, hour)
+    elif chart_type == "jets":
+        chart = WAJetsWaves(domain, timestamp, hour)
+    elif chart_type == "conv":
+        chart = ConvectiveChart(domain, timestamp, hour)
+    elif chart_type == "synth":
+        chart = SynthesisChart(domain, timestamp, hour)
     else:
         raise ValueError("Unrecognised chart type")
 
