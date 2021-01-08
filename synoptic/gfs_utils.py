@@ -72,12 +72,14 @@ def get_coord_constraint(name, value):
         name: value
     })
 
-def get_level_coord(gfs_cube):
+def get_level_coord(gfs_cube, units=None):
     """
     Get level coordinate for GFS cube
 
     Identify level coordinate dimension in GFS cube, these are
     coordinate dimensions whose var_name starts with "lv".
+
+    If units are specified, convert the coordinate accordingly.
 
     Returns (some information about the level coordinate) or None if
     none found.
@@ -86,6 +88,10 @@ def get_level_coord(gfs_cube):
         raise TypeError("Expecting Cube object")
     level_coord = next((c for c in gfs_cube.dim_coords
                         if c.var_name is not None and c.var_name.startswith("lv")), None)
+
+    if level_coord is not None and units is not None:
+        level_coord.convert_units(units)
+
     return level_coord
 
 def main():

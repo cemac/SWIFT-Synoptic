@@ -54,7 +54,10 @@ import gfs_utils  # works when calling module code
 
 class SynopticChart:
     """
-    Synoptic chart
+    Synoptic chart base class
+
+    This class provides functionality for setting forecast domain,
+    date and time, building charts, and plotting.
 
     """
 
@@ -299,6 +302,43 @@ class WAJetsWaves(SynopticChart):
 
         self.aej = AfricanEasterlyJet(self)
 
+class SynthesisChart(SynopticChart):
+    """Synthesis chart displaying key features for analysis.
+
+    - a contour plot of 925-650 hPa wind shear
+    - low level streamlines, no shading
+    - overplot ITD and AEJ (and AEW if possible)
+    - overplot contours of RH700 = 60% and 75%
+    """
+
+    def __init__(self, domain, fct_timestamp, fct_hour, data_dir=None):
+        super().__init__(domain, fct_timestamp, fct_hour, data_dir)
+
+        self.chart_type = "synthesis"
+
+        # Inter-tropical discontinuity
+        self.itd = ITD(self)
+
+        # African Easterly Jet
+        self.aej = AfricanEasterlyJet(self)
+        self.aej.plot_ws = False
+
+        # Windspeed and streamlines at 925 hPa
+        self.wc_925 = WindPressureLevel(self, 925)
+        self.wc_925.plot_ws = False
+
+        # Mid-level dry intrusion - relative humidity contours at 700 hPA
+        self.mdi_700 = MidlevelDryIntrusion(self, 700)
+
+        # 925-650hPa wind shear
+        self.ws_925_600 = WindShear(self, 925, 600)
+
+#-----------------------------------------
+
+# Synoptic components
+
+#-----------------------------------------
+
 class SynopticComponent:
     """ Synoptic chart component """
 
@@ -329,10 +369,16 @@ class SynopticComponent:
         'pres': 'PRES_P0_L1_GLL0',
     }
 
-    def __init__(self, chart):
+    def __init__(self, chart, level=None):
         self.init()
         self.chart = chart
         self.data = chart.get_data(self.gfs_vars, units=self.units)
+        if level is not None:
+            self.level = level
+            # Constrain data to specified level
+            lv_coord = gfs_utils.get_level_coord(self.data, self.level_units)
+            cc = gfs_utils.get_coord_constraint(lv_coord.name(), self.level)
+            self.data = self.data.extract(cc)
         #self.backend = chart.get_backend()
         coords = ('latitude', 'longitude')
         if isinstance(self.data, iris.cube.CubeList):
@@ -535,22 +581,31 @@ class WindComponent(SynopticComponent):
         # Get U/V wind components
         u, v = self.data.extract(self.gfs_vars)
 
-        # Constrain to specified level
-        u_lv_coord = gfs_utils.get_level_coord(u)
-        if self.level_units is not None:
-            u_lv_coord.convert_units(self.level_units)
+        # Get level coordinates for U/V wind components
+        u_lv_coord = gfs_utils.get_level_coord(u, self.level_units)
+        v_lv_coord = gfs_utils.get_level_coord(v, self.level_units)
+
+        # Constrain to specified level(s)
         uc = gfs_utils.get_coord_constraint(u_lv_coord.name(), self.level)
         u = u.extract(uc)
 
-        v_lv_coord = gfs_utils.get_level_coord(v)
-        if self.level_units is not None:
-            v_lv_coord.convert_units(self.level_units)
         vc = gfs_utils.get_coord_constraint(v_lv_coord.name(), self.level)
         v = v.extract(vc)
 
-        U = u.data
-        V = v.data
-        windspeed = np.sqrt(U**2 + V**2)
+        if type(self.level) is list:
+            U = []
+            V = []
+            windspeed = []
+            for lvl in self.level:
+                ui = u.extract(gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl))
+                vi = v.extract(gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl))
+                U.append(ui.data)
+                V.append(vi.data)
+                windspeed.append(np.sqrt(ui.data**2 + vi.data**2))
+        else:
+            U = u.data
+            V = v.data
+            windspeed = np.sqrt(U**2 + V**2)
 
         return (U, V, windspeed)
 
@@ -730,6 +785,79 @@ class AfricanEasterlyJet(WindComponent):
             # TODO add arrowheads as quiver plot
             # ax.quiver(ax, ay, vx, vy, ...)
 
+class MidlevelDryIntrusion(SynopticComponent):
+    """
+    Mid-level dry intrusion
+
+    Relative humidity at 700hPa, 60% and 75% contours
+    """
+    def __init__(self, chart, level):
+        super().__init__(chart, level)
+
+    def init(self):
+        self.name = "Mid-level dry intrusion"
+        self.gfs_vars = SynopticComponent.GFS_VARS['rh']
+        self.units = 'percent'
+        self.level_units = 'hPa'
+
+        self.rh_levels = [ 60, 75 ]
+
+        self.cm_name = 'Blues'
+
+        cmap_hi = mcm.get_cmap(self.cm_name, 512)
+        cmap = mc.ListedColormap(cmap_hi(np.linspace(0.6, 0.75, 256)),
+                                   name=self.cm_name)
+
+        # Formatting options
+        self.options = {
+            #'colors': 'blue',
+            'cmap': cmap
+        }
+
+    def plot(self, ax):
+
+        # Data to plot
+        rh = self.data.data
+
+        # Plot relative humidity contours
+        # TODO masking and line decoration
+        ctr = ax.contour(self.lon, self.lat, rh,
+                         levels=self.rh_levels,
+                         #linewidths=lw,
+                         **self.options)
+        ax.clabel(ctr, fmt = '%1.0f')
+
+class WindShear(WindComponent):
+
+    def __init__(self, chart, level1, level2):
+        super().__init__(chart, [level1, level2])
+
+    def init(self):
+        self.name = "Wind shear"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
+
+        # Formatting options
+        self.options = {
+            'color': 'lightgrey',
+            'width': 0.002,  # width relative to selected units (default = axis width)
+        }
+
+    def plot(self, ax):
+
+        U, V, _ = self.get_wind_components()
+
+        U_diff = U[1] - U[0]
+        V_diff = V[1] - V[0]
+
+        qv = ax.quiver(self.lon[::2], self.lat[::2],
+                       U_diff[::2, ::2], V_diff[::2, ::2],
+                       **self.options)
+
+
+#---------------------------------------------------------------
+
 # class Template(SynopticComponent):
 
 #     def __init__(self, chart):
@@ -737,7 +865,7 @@ class AfricanEasterlyJet(WindComponent):
 
 #     def init(self):
 #         self.name = "Name"
-#         self.gfs_var = SynopticComponent.GFS_VARS['code']
+#         self.gfs_vars = SynopticComponent.GFS_VARS['code']
 #         self.units = None
 
 #     def plot(self, ax):
