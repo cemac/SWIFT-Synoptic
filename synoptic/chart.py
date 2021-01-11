@@ -230,15 +230,16 @@ class SynopticChart:
         fig, ax = plt.subplots(**self.mpl_options)
         ax.set_position([0., 0., 1., 1.])  # Fill frame
         ax.set_axis_off()
-        # Add coastlines and borders
-        ax.coastlines(color='grey', alpha=0.8)
-        ax.add_feature(cfeature.BORDERS, color='grey', alpha=0.5)
         # Add gridlines
-        gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True, zorder=1.5)
+        grid_col = 'lightsteelblue'
+        gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True, zorder=1.5, color=grid_col)
         gl.xlocator = mticker.FixedLocator(np.arange(-30, 30, 10))
         gl.ylocator = mticker.FixedLocator(np.arange(0, 40, 10))
-        gl.xlabel_style = { 'color': '#aaaaaa'}
-        gl.ylabel_style = { 'color': '#aaaaaa'}
+        gl.xlabel_style = { 'color': grid_col}
+        gl.ylabel_style = { 'color': grid_col}
+        # Add coastlines and borders
+        ax.coastlines(color='black', alpha=0.5)
+        ax.add_feature(cfeature.BORDERS, color='black', alpha=0.5)
 
         # Add formatted date string
         date_str = '{:%Y%m%d %H:%M} + {:d} hours'.format(self.date(), self.fct_hour)
