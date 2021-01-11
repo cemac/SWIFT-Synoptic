@@ -838,10 +838,20 @@ class WindShear(WindComponent):
         self.units = None
         self.level_units = 'hPa'
 
+        self.plot_ctr = True
+        self.plot_qv = True
+
         # Formatting options
-        self.options = {
-            'color': 'lightgrey',
+        self.qv_skip = 2
+        self.qv_options = {
+            'color': 'black',
+            'alpha': 0.2,
             'width': 0.002,  # width relative to selected units (default = axis width)
+        }
+
+        self.ws_options = {
+            'cmap': 'Blues',
+            'alpha': 0.4,
         }
 
     def plot(self, ax):
@@ -851,9 +861,16 @@ class WindShear(WindComponent):
         U_diff = U[1] - U[0]
         V_diff = V[1] - V[0]
 
-        qv = ax.quiver(self.lon[::2], self.lat[::2],
-                       U_diff[::2, ::2], V_diff[::2, ::2],
-                       **self.options)
+        ws_diff = np.sqrt(U_diff**2 + V_diff**2)
+
+        if self.plot_ctr:
+            ctr = ax.contourf(self.lon, self.lat, ws_diff, **self.ws_options)
+
+        if self.plot_qv:
+            qv = ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
+                           U_diff[::self.qv_skip, ::self.qv_skip],
+                           V_diff[::self.qv_skip, ::self.qv_skip],
+                           **self.qv_options)
 
 
 #---------------------------------------------------------------
