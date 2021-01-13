@@ -404,6 +404,48 @@ class SynopticComponent:
         # chart that returns the plotting apparatus
         raise RuntimeError("Not implemented")
 
+    def get_masked_colormap(self, name=None, cm_range=[0,1], res=256, alpha=None,
+                            thres_min=None, thres_max=None,
+                            val_min=0, val_max=1, mask_color=[1, 1, 1, 0]):
+        """
+        Get colour map with transparency-based masking for values outside
+        a specified range.
+
+        Using this method means that the colours in the colour map are
+        assigned across the range of values in the data rather than
+        being compressed to the range of unmasked values as would be
+        the case when applying a colour mask to masked data.
+
+        """
+        cm_min, cm_max = cm_range
+
+        # Create a Colormap object which can be used to get a
+        # hi-res RGBA array of values for the named colour map
+        cmap_hi = mcm.get_cmap(self.cm_name if name is None else name, 2*res)
+
+        # Create a colour map based on specified range
+        cmap_sampled = mc.ListedColormap(cmap_hi(np.linspace(cm_min, cm_max, res)))
+        cmap = cmap_sampled(np.linspace(0, 1, res))
+
+        if alpha is not None:
+            # Set alpha transparency
+            cmap[:, -1] = alpha
+
+        mask_val = np.array(mask_color)
+
+        if self.cm_thres is not None:
+            thres_min, thres_max = self.cm_thres
+
+        if thres_min is not None:
+            # Mask colour map for values below thres_min
+            cmap[:round(thres_min/(val_max - val_min)*res), :] = mask_val
+
+        if thres_max is not None:
+            # Mask colour map for values above thres_max
+            cmap[round(thres_max/(val_max - val_min)*res):, :] = mask_val
+
+        return mc.ListedColormap(cmap)
+
 class MeanSeaLevelPressure(SynopticComponent):
     """
     Mean sea level pressure.
@@ -636,19 +678,11 @@ class WindPressureLevel(WindComponent):
         self.thres_ws = 10
 
         self.cm_name = 'Blues'
-
-        # TODO create a util function to create the colour map
-        # get_masked_colormap(name, min, max)
-        cmap_hi = mcm.get_cmap(self.cm_name, 512)
-        cmap = mc.ListedColormap(cmap_hi(np.linspace(0.1, 1.0, 256)),
-                                   name=self.cm_name)
-        cmap = cmap(np.linspace(0,1,256))
-        cmap[:round(self.thres_ws/self.max_ws*256), :] = np.array([1, 1, 1, 1])
+        self.cm_thres = [ self.thres_ws, None ]
 
         # Formatting options
         self.ws_options = {
-            'alpha': 0.4,
-            'cmap': mc.ListedColormap(cmap),
+            'cmap': self.cm_name,
         }
 
         self.strm_options = {
@@ -668,6 +702,8 @@ class WindPressureLevel(WindComponent):
 
         if self.plot_ws:
             # Plot windspeed at 925 hPa
+            max_ws = np.amax(windspeed)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
             ctr = ax.contourf(self.lon, self.lat, windspeed,
                               **self.ws_options)
 
@@ -724,22 +760,14 @@ class AfricanEasterlyJet(WindComponent):
 
         self.min_ws = 0
         self.max_ws = 25
-        self.thres_ws = 10
+        self.thres_axis = 10
 
         self.cm_name = 'Greens'
-
-        # TODO create a util function to create the colour map
-        # get_masked_colormap(name, min, max)
-        cmap_hi = mcm.get_cmap(self.cm_name, 512)
-        cmap = mc.ListedColormap(cmap_hi(np.linspace(0.1, 1.0, 256)),
-                                 name=self.cm_name)
-        cmap = cmap(np.linspace(0,1,256))
-        cmap[:round(self.thres_ws/self.max_ws*256), :] = np.array([1, 1, 1, 1])
+        self.cm_thres = [ self.thres_axis, None ]
 
         # Formatting options
         self.ws_options = {
-            'alpha': 0.4,
-            'cmap': mc.ListedColormap(cmap),
+            'cmap': self.cm_name,
         }
 
         self.strm_options = {
@@ -757,6 +785,8 @@ class AfricanEasterlyJet(WindComponent):
 
         if self.plot_ws:
             # Plot windspeed contours
+            max_ws = np.amax(windspeed)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
             ctr = ax.contourf(self.lon, self.lat, windspeed,
                               **self.ws_options)
 
@@ -853,9 +883,13 @@ class WindShear(WindComponent):
             'width': 0.002,  # width relative to selected units (default = axis width)
         }
 
+        self.ws_thres = 15
+
+        self.cm_name = 'Blues'
+        self.cm_thres = [ self.ws_thres, None ]
+
         self.ws_options = {
-            'cmap': 'Blues',
-            'alpha': 0.4,
+            'cmap': self.cm_name,
         }
 
     def plot(self, ax):
@@ -868,7 +902,9 @@ class WindShear(WindComponent):
         ws_diff = np.sqrt(U_diff**2 + V_diff**2)
 
         if self.plot_ctr:
-            ctr = ax.contourf(self.lon, self.lat, ws_diff, **self.ws_options)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=np.amax(ws_diff), alpha=0.4)
+            ctr = ax.contourf(self.lon, self.lat, ws_diff,
+                              **self.ws_options)
 
         if self.plot_qv:
             qv = ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
