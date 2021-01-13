@@ -620,10 +620,12 @@ class WindComponent(SynopticComponent):
         super().__init__(chart)
         self.level = level
 
-    def get_wind_components(self):
+    def get_wind_components(self, **kwargs):
         """
-        Extract U/V wind components and windspeed for a given level
+        Extract U/V wind components and windspeed for given level(s)
         """
+        level = kwargs.get("level", self.level)
+
         # Get U/V wind components
         u, v = self.data.extract(self.gfs_vars)
 
@@ -632,17 +634,17 @@ class WindComponent(SynopticComponent):
         v_lv_coord = gfs_utils.get_level_coord(v, self.level_units)
 
         # Constrain to specified level(s)
-        uc = gfs_utils.get_coord_constraint(u_lv_coord.name(), self.level)
+        uc = gfs_utils.get_coord_constraint(u_lv_coord.name(), level)
         u = u.extract(uc)
 
-        vc = gfs_utils.get_coord_constraint(v_lv_coord.name(), self.level)
+        vc = gfs_utils.get_coord_constraint(v_lv_coord.name(), level)
         v = v.extract(vc)
 
-        if type(self.level) is list:
+        if type(level) is list:
             U = []
             V = []
             windspeed = []
-            for lvl in self.level:
+            for lvl in level:
                 ui = u.extract(gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl))
                 vi = v.extract(gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl))
                 U.append(ui.data)
