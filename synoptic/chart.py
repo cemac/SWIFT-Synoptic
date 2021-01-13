@@ -69,7 +69,7 @@ class SynopticChart:
     # Domain specification is a tuple specifying (lat_min, lon_min,
     # lat_max, lon_max).
     DOMAINS = {
-        'WA': (-2.5, -32.0, 36.0, 28.0),
+        'WA': (-2.5, -25.0, 36.0, 35.0),
         'EA': (-16.0, 20.0, 12.0, 50.0)
     }
 
