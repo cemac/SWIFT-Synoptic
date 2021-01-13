@@ -748,7 +748,7 @@ class WindHeightLevel(WindComponent):
 
 class AfricanEasterlyJet(WindComponent):
 
-    def __init__(self, chart, level=600):
+    def __init__(self, chart, level=650):
         super().__init__(chart, level)
 
     def init(self):
@@ -763,6 +763,7 @@ class AfricanEasterlyJet(WindComponent):
         self.min_ws = 0
         self.max_ws = 25
         self.thres_axis = 10
+        self.thres_windshear = 15
 
         self.cm_name = 'Greens'
         self.cm_thres = [ self.thres_axis, None ]
@@ -796,7 +797,7 @@ class AfricanEasterlyJet(WindComponent):
             # Plot streamlines connecting maximum wind location
 
             # mask to relevant region i.e. between 10-15 deg N
-            lat_grid = np.meshgrid(self.lon, self.lat)[1]
+            lon_grid, lat_grid = np.meshgrid(self.lon, self.lat)
             mask = (lat_grid < 5) | (lat_grid > 20)
 
             # find max windspeed for the relevant region
@@ -807,8 +808,24 @@ class AfricanEasterlyJet(WindComponent):
             seed_index = np.argwhere(ws_masked > max_ws*0.85)
             seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]] for x in seed_index])
 
-            # mask U, V to mask streamlines outside this area
-            mask = ws_masked < self.thres_ws
+            # Define mask for jet axis
+            mask1 = (ws_masked < self.thres_axis)
+
+            # Get wind shear components
+            Us, Vs, _ = self.get_wind_components(level=[650, 925])
+
+            UU = Us[1] - Us[0]
+            VV = Vs[1] - Vs[0]
+
+            wind_shear = np.sqrt(UU**2 + VV**2)
+
+            # Define mask for wind shear
+            mask2 = wind_shear < self.thres_windshear
+
+            # Mask U, V to mask streamlines below thresholds for
+            # windspeed and wind shear
+            mask = mask1 & mask2
+
             # U = np.ma.array(U, mask=mask)
             # V = np.ma.array(V, mask=mask)
             U[mask] = np.nan
