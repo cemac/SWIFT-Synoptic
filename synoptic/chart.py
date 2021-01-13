@@ -926,6 +926,9 @@ class WindShear(WindComponent):
                               **self.ws_options)
 
         if self.plot_qv:
+            # Mask values below threshold
+            U_diff = np.ma.masked_where(ws_diff < self.ws_thres, U_diff)
+            V_diff = np.ma.masked_where(ws_diff < self.ws_thres, V_diff)
             qv = ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
                            U_diff[::self.qv_skip, ::self.qv_skip],
                            V_diff[::self.qv_skip, ::self.qv_skip],
