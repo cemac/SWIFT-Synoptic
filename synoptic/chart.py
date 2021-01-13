@@ -238,8 +238,9 @@ class SynopticChart:
         gl.xlabel_style = { 'color': grid_col}
         gl.ylabel_style = { 'color': grid_col}
         # Add coastlines and borders
-        ax.coastlines(color='black', alpha=0.5)
-        ax.add_feature(cfeature.BORDERS, color='black', alpha=0.5)
+        map_alpha = 0.9
+        ax.coastlines(color='black', alpha=map_alpha)
+        ax.add_feature(cfeature.BORDERS, color='black', alpha=map_alpha)
 
         # Add formatted date string
         date_str = '{:%Y%m%d %H:%M} + {:d} hours'.format(self.date(), self.fct_hour)
@@ -327,6 +328,8 @@ class SynthesisChart(SynopticChart):
         # Windspeed and streamlines at 925 hPa
         self.wc_925 = WindPressureLevel(self, 925)
         self.wc_925.plot_ws = False
+        self.wc_925.strm_options['color'] = 'black'
+        self.wc_925.strm_options['linewidth'] = 0.7
 
         # Mid-level dry intrusion - relative humidity contours at 700 hPA
         self.mdi_700 = MidlevelDryIntrusion(self, 700)
@@ -520,7 +523,7 @@ class ITD(SynopticComponent):
         }
 
         # Plotting options
-        self.lw = 1.0
+        self.lw = 2.0
         self.col = 'black'
         self.col2 = 'white'
 
@@ -742,8 +745,8 @@ class AfricanEasterlyJet(WindComponent):
         self.strm_options = {
             'color': 'green',
             # 'cmap': cmap,
-            'linewidth': 0.8,
-            'arrowsize': 1.9,
+            'linewidth': 2.0,
+            'arrowsize': 3.0,
             'arrowstyle': '->',
             # 'norm': cnorm,
         }
