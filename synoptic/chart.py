@@ -334,7 +334,7 @@ class SynthesisChart(SynopticChart):
         self.itd = ITD(self)
 
         # African Easterly Jet
-        self.aej = AfricanEasterlyJet(self)
+        self.aej = AfricanEasterlyJet(self, 600)
         self.aej.plot_ws = False
 
         # Windspeed and streamlines at 925 hPa
@@ -347,7 +347,7 @@ class SynthesisChart(SynopticChart):
         self.mdi_700 = MidlevelDryIntrusion(self, 700)
 
         # 925-650hPa wind shear
-        self.ws_925_600 = WindShear(self, 925, 600)
+        self.ws_925_650 = WindShear(self, 925, 650)
 
 #-----------------------------------------
 
