@@ -865,18 +865,18 @@ class MidlevelDryIntrusion(SynopticComponent):
         self.units = 'percent'
         self.level_units = 'hPa'
 
-        self.rh_levels = [ 60, 75 ]
+        self.levels = [ 58,
+                        60 ]
 
-        self.cm_name = 'Blues'
-
-        cmap_hi = mcm.get_cmap(self.cm_name, 512)
-        cmap = mc.ListedColormap(cmap_hi(np.linspace(0.6, 0.75, 256)),
-                                   name=self.cm_name)
+        self.lw = 3.0
 
         # Formatting options
         self.options = {
-            #'colors': 'blue',
-            'cmap': cmap
+            'linewidths': [ 2*self.lw,
+                            self.lw ],
+            'linestyles': [ (0, (0.9, 1.8)),
+                            'solid' ],
+            'colors': '#198dd5'
         }
 
     def plot(self, ax):
@@ -885,12 +885,10 @@ class MidlevelDryIntrusion(SynopticComponent):
         rh = self.data.data
 
         # Plot relative humidity contours
-        # TODO masking and line decoration
         ctr = ax.contour(self.lon, self.lat, rh,
-                         levels=self.rh_levels,
-                         #linewidths=lw,
+                         levels=self.levels,
                          **self.options)
-        ax.clabel(ctr, fmt = '%1.0f')
+        #ax.clabel(ctr, fmt = '%1.0f')
 
 class WindShear(WindComponent):
 
