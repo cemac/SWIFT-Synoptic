@@ -234,7 +234,7 @@ class SynopticChart:
         # Add gridlines
         grid_col = 'lightsteelblue'
         gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True, zorder=1.5, color=grid_col)
-        gl.xlocator = mticker.FixedLocator(np.arange(-30, 30, 10))
+        gl.xlocator = mticker.FixedLocator(np.arange(-30, 40, 10))
         gl.ylocator = mticker.FixedLocator(np.arange(0, 40, 10))
         gl.xlabel_style = { 'color': grid_col}
         gl.ylabel_style = { 'color': grid_col}
