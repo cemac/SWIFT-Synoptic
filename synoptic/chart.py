@@ -42,6 +42,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib.cm as mcm
 import matplotlib.colors as mc
+from matplotlib.offsetbox import AnchoredText
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
 import iris
@@ -249,6 +250,16 @@ class SynopticChart:
                 verticalalignment='bottom',
                 size='large',
                 transform=ax.transAxes)
+
+        DATA_SOURCE = 'NCEP/NOAA'
+        DATA_LICENSE = 'public domain'
+
+        # Add a text annotation for the license information
+        text = AnchoredText(f'Data: {DATA_SOURCE} ({DATA_LICENSE})',
+                            loc='lower right', borderpad=0, pad=0,
+                            prop=dict(size=9, backgroundcolor='#ffffff'),
+                            frameon=False)
+        ax.add_artist(text)
 
         return (fig, ax)
 
