@@ -249,6 +249,7 @@ class SynopticChart:
                 horizontalalignment='left',
                 verticalalignment='bottom',
                 size='large',
+                backgroundcolor='#ffffff',
                 transform=ax.transAxes)
 
         DATA_SOURCE = 'NCEP/NOAA'
