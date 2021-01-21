@@ -912,9 +912,9 @@ class WindShear(WindComponent):
             'width': 0.002,  # width relative to selected units (default = axis width)
         }
 
-        self.ws_thres = 15
+        self.ws_thres = 25
 
-        self.cm_name = 'Blues'
+        self.cm_name = 'Reds'
         self.cm_thres = [ self.ws_thres, None ]
 
         self.ws_options = {
