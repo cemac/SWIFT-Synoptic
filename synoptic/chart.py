@@ -50,6 +50,8 @@ import cartopy.crs as ccrs
 import iris
 import iris.analysis.calculus
 import numpy as np
+import skimage.measure
+import shapely.geometry as sgeom
 
 #from * import gfs_utils  # works for tests but not when calling module code
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
@@ -772,11 +774,13 @@ class AfricanEasterlyJet(WindComponent):
         self.level_units = 'hPa'
 
         self.plot_ws = True
+        self.plot_core = True
         self.plot_strm = True
 
         self.min_ws = 0
         self.max_ws = 25
         self.thres_axis = 10
+        self.thres_core = 23
         self.thres_windshear = 15
 
         self.cm_name = 'Greens'
@@ -785,6 +789,19 @@ class AfricanEasterlyJet(WindComponent):
         # Formatting options
         self.ws_options = {
             'cmap': self.cm_name,
+        }
+
+        self.core_options = {
+            'edgecolor': 'black',
+            'fill': None,
+            'linewidth': 1.0,
+        }
+        self.core_label_fontsize = 8.0
+        self.core_label_units = f'ms\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
+        self.core_label_options = {
+            'xytext': np.array([-2, -1.25])*self.core_label_fontsize,
+            'textcoords': 'offset points',
+            'fontsize': self.core_label_fontsize,
         }
 
         self.strm_options = {
@@ -806,6 +823,43 @@ class AfricanEasterlyJet(WindComponent):
             self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
             ctr = ax.contourf(self.lon, self.lat, windspeed,
                               **self.ws_options)
+
+        if self.plot_core:
+            # Mask windspeed to relevant region i.e. between 10-15 deg N
+            lon_grid, lat_grid = np.meshgrid(self.lon, self.lat)
+            mask = (lat_grid < 5) | (lat_grid > 20)
+            ws_masked = np.ma.masked_where(mask, windspeed)
+            ws_masked[mask] = np.nan
+
+            # Get contours for core threshold windspeed
+            ctr_list = skimage.measure.find_contours(ws_masked, level=self.thres_core)
+            for c in ctr_list:
+                shp = sgeom.Polygon(c)
+
+                # Translate centroid coordinates to lon/lat
+                centroid = shp.centroid.coords[0]
+                xy = [self.lon[np.rint(centroid[1]).astype(int)],
+                      self.lat[np.rint(centroid[0]).astype(int)]]
+
+                # Use contour bounds to get dimensions for core
+                it = iter(shp.bounds)
+                bounds = np.array([[self.lon[np.rint(next(it)).astype(int)],
+                                    self.lat[np.rint(x).astype(int)]] for x in it])
+                dx, dy = np.abs(bounds[1] - bounds[0])
+
+                # Draw core as ellipse around centroid
+                p = mpatches.Ellipse(xy=xy,
+                                     width=dx,
+                                     height=dy,
+                                     angle=0,
+                                     **self.core_options)
+                ax.add_artist(p)
+
+                # Add label to indicate core threshold windspeed
+                loc = xy + np.array([0, dy/2])
+                ax.annotate(f'{self.thres_core:1.0f} {self.core_label_units}',
+                            xy=loc,
+                            **self.core_label_options)
 
         if self.plot_strm:
             # Plot streamlines connecting maximum wind location
