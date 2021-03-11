@@ -96,8 +96,10 @@ class SynopticChart:
             self.chart_type = "Synoptic"
         if self.domain_name is None:
             self.domain_name = "Custom"
-        return f"{self.chart_type.capitalize()} chart for {self.get_date_str()}"
-        " + {self.fct_hour} hours ({self.domain_name} domain)"
+        return (
+            f'{self.chart_type.capitalize()} chart for {self.get_date_str()} '
+            f'+ {self.fct_hour} hours ({self.domain_name} domain)'
+        )
 
     def get_date_str(self):
         return dt.datetime.strptime(self.fct_timestamp, '%Y%m%d%H').strftime("%Y%m%d %H:%M")
