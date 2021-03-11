@@ -223,8 +223,9 @@ class SynopticChart:
             c.plot(ax)
 
         if dir_path is not None:
-            file_path = os.path.join(dir_path, '{:%Y%m%d%H%M}_{:02d}.png'.format(self.date(), 0))
-            fig.savefig(file_path)
+            file_name = '{:%Y%m%d%H%M}_{:03d}.png'.format(self.date(), self.fct_hour)
+            file_path = os.path.join(dir_path, file_name)
+            plt.savefig(file_path)
             plt.close()
         else:
             plt.show()
@@ -1067,13 +1068,23 @@ def parse_args():
                         default="low",
                         help='''Chart type (low, jets, conv or synth)''')
 
+    parser.add_argument('-o', '--output-dir', nargs='?', type=str,
+                        dest='output_dir', default=None,
+                        help="Path to output directory")
+
     pa = parser.parse_args()
 
-    return (pa.domain, pa.timestamp, pa.forecast_hour, pa.chart_type)
+    # Check if output directory exists
+    if pa.output_dir and not os.path.exists(pa.output_dir):
+        err_msg = "Output directory {0} does not exist\n"
+        err_msg = err_msg.format(pa.output_dir)
+        raise ValueError(err_msg)
+
+    return (pa.domain, pa.timestamp, pa.forecast_hour, pa.chart_type, pa.output_dir)
 
 def main():
 
-    domain, timestamp, hour, chart_type = parse_args()
+    domain, timestamp, hour, chart_type, out_dir = parse_args()
 
     if chart_type == "low":
         chart = LowLevelChart(domain, timestamp, hour)
@@ -1088,7 +1099,7 @@ def main():
 
     print(chart)
 
-    chart.build()
+    chart.build(out_dir)
 
     #end main()
 
