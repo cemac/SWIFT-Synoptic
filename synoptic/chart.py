@@ -87,7 +87,7 @@ class SynopticChart:
 
         # Options for plotting backend
         self.mpl_options = {
-            #frameon: False,
+            'figsize': None,
             'subplot_kw': { 'projection': ccrs.PlateCarree() },
         }
 
@@ -235,9 +235,13 @@ class SynopticChart:
     def setup_plot(self):
 
         # Set up figure
-        fig, ax = plt.subplots(**self.mpl_options)
+        fig = plt.figure(figsize=self.mpl_options['figsize'])
+
+        # Set up axis
+        ax = fig.add_subplot(**self.mpl_options['subplot_kw'])
         ax.set_position([0., 0., 1., 1.])  # Fill frame
         ax.set_axis_off()
+
         # Add gridlines
         grid_col = 'lightsteelblue'
         gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True, zorder=1.5, color=grid_col)
@@ -245,6 +249,7 @@ class SynopticChart:
         gl.ylocator = mticker.FixedLocator(np.arange(0, 40, 10))
         gl.xlabel_style = { 'color': grid_col}
         gl.ylabel_style = { 'color': grid_col}
+
         # Add coastlines and borders
         map_alpha = 0.9
         ax.coastlines(color='black', alpha=map_alpha)
@@ -269,7 +274,7 @@ class SynopticChart:
                             frameon=False)
         ax.add_artist(text)
 
-        return (fig, ax)
+        return fig, ax
 
 class LowLevelChart(SynopticChart):
     """Low-level chart displaying windspeed, streamlines, ITD based on
