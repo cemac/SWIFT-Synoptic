@@ -817,9 +817,11 @@ class AfricanEasterlyJet(WindComponent):
             # 'cmap': cmap,
             'linewidth': 2.0,
             'arrowsize': 3.0,
-            'arrowstyle': '->',
+            'arrowstyle': '-',
             # 'norm': cnorm,
         }
+
+        self.marker_interval = 3.2
 
     def plot(self, ax):
 
@@ -911,8 +913,38 @@ class AfricanEasterlyJet(WindComponent):
                                  start_points=seed_points,
                                  **self.strm_options)
 
-            # TODO add arrowheads as quiver plot
-            # ax.quiver(ax, ay, vx, vy, ...)
+            arrow_kw = self.strm_options
+            arrow_kw['mutation_scale'] = 10 * self.strm_options["arrowsize"]
+            arrow_kw.pop('arrowsize')
+            arrow_kw['arrowstyle'] = '->'
+
+            # Get line segments and place arrows
+            current_point = None
+            segments = strm.lines.get_segments()
+            for seg in segments:
+                for i, s in enumerate(seg[:-1]):
+                    if not all(s == current_point):
+                        # Reset distance sum
+                        dist_sum = 0
+                    # Check length of segment and add patches at
+                    # suitable intervals
+                    dx, dy = seg[i+1] - s
+                    seg_len = np.hypot(dx, dy)
+                    dist_sum = dist_sum + seg_len
+                    while dist_sum > self.marker_interval:
+                        dist_sum -= self.marker_interval
+                        # Find start and end points for arrow patch
+                        v = np.array([dx, dy])
+                        loc = (seg_len - dist_sum)/seg_len
+                        start = s + loc*v
+                        end = start + 0.1*v/seg_len
+                        # Draw patch
+                        p = mpatches.FancyArrowPatch(
+                            start, end, transform=ax.transData,
+                            **arrow_kw
+                        )
+                        ax.add_patch(p)
+                    current_point = seg[i+1]
 
 class MidlevelDryIntrusion(SynopticComponent):
     """
