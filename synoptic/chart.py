@@ -812,16 +812,24 @@ class AfricanEasterlyJet(WindComponent):
             'fontsize': self.core_label_fontsize,
         }
 
+        self.lw = 2.0
+        self.color = 'green'
+        self.arrow_size = 3.0
+        self.arrow_interval = 3.2
+
         self.strm_options = {
-            'color': 'green',
-            # 'cmap': cmap,
-            'linewidth': 2.0,
-            'arrowsize': 3.0,
+            'color': self.color,
+            'linewidth': self.lw,
             'arrowstyle': '-',
-            # 'norm': cnorm,
         }
 
-        self.marker_interval = 3.2
+        self.arrow_options = {
+            'color': self.color,
+            'linewidth': self.lw,
+            'arrowstyle': '->',
+            # set mutation_scale as in matplotlib.streamplot():
+            'mutation_scale': 10 * self.arrow_size,
+        }
 
     def plot(self, ax):
 
@@ -913,11 +921,6 @@ class AfricanEasterlyJet(WindComponent):
                                  start_points=seed_points,
                                  **self.strm_options)
 
-            arrow_kw = self.strm_options
-            arrow_kw['mutation_scale'] = 10 * self.strm_options["arrowsize"]
-            arrow_kw.pop('arrowsize')
-            arrow_kw['arrowstyle'] = '->'
-
             # Get line segments and place arrows
             current_point = None
             segments = strm.lines.get_segments()
@@ -931,8 +934,8 @@ class AfricanEasterlyJet(WindComponent):
                     dx, dy = seg[i+1] - s
                     seg_len = np.hypot(dx, dy)
                     dist_sum = dist_sum + seg_len
-                    while dist_sum > self.marker_interval:
-                        dist_sum -= self.marker_interval
+                    while dist_sum > self.arrow_interval:
+                        dist_sum -= self.arrow_interval
                         # Find start and end points for arrow patch
                         v = np.array([dx, dy])
                         loc = (seg_len - dist_sum)/seg_len
@@ -941,7 +944,7 @@ class AfricanEasterlyJet(WindComponent):
                         # Draw patch
                         p = mpatches.FancyArrowPatch(
                             start, end, transform=ax.transData,
-                            **arrow_kw
+                            **self.arrow_options
                         )
                         ax.add_patch(p)
                     current_point = seg[i+1]
