@@ -1040,7 +1040,7 @@ class WindShear(WindComponent):
 
         self.ws_thres = 25
 
-        self.cm_name = 'Reds'
+        self.cm_name = 'Oranges'
         self.cm_thres = [ self.ws_thres, None ]
 
         self.ws_options = {
