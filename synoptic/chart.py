@@ -998,7 +998,7 @@ class MidlevelDryIntrusion(SynopticComponent):
                     # Check length of segment and add patches at
                     # suitable intervals
                     dx, dy = seg[i+1] - s
-                    seg_len = np.linalg.norm([dx, dy])
+                    seg_len = np.hypot(dx, dy)
                     dist_sum = dist_sum + seg_len
                     while dist_sum > self.marker_thres:
                         dist_sum -= self.marker_thres
