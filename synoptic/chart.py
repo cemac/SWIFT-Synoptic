@@ -400,8 +400,8 @@ class SynopticComponent:
     }
 
     def __init__(self, chart, level=None):
-        self.init()
         self.chart = chart
+        self.init()
         self.data = chart.get_data(self.gfs_vars, units=self.units)
         if level is not None:
             self.level = level
@@ -751,15 +751,17 @@ class WindPressureLevel(WindComponent):
             'cmap': self.cm_name,
         }
 
+        # Set streamline density based on longitudinal and latitudinal
+        # extent
+        domain = np.array(self.chart.domain)
+        lon_lat = domain.reshape((2,2), order='F')[::-1]
+        delta = np.diff(lon_lat).flatten()
+
         self.strm_options = {
-            'density': (2.5, 1.66),
-            # 'color': 'black',
-            # 'color': speed,
-            # 'cmap': strm_cmap,
+            'density': tuple(delta*0.04),
             'linewidth': 0.4,
             'arrowsize': 0.9,
             'arrowstyle': '->',
-            # 'norm': cnorm,
         }
 
     def plot(self, ax):
