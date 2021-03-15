@@ -68,13 +68,13 @@ class SynopticChart:
 
     # Coords for standard domains from GFS_plotting/controls/domains
     # (could read in programatically from similar file)
-    # Values are (min_lat, min_lon, max_lat, max_lon)
+    # Values are (lat_min, lon_min, lat_max, lon_max)
     # (could set up with value as {lat_min: -16.0, etc})
 
     # Domain specification is a tuple specifying (lat_min, lon_min,
     # lat_max, lon_max).
     DOMAINS = {
-        'WA': (-2.5, -25.0, 36.0, 35.0),
+        'WA': (0.0, -25.0, 40.0, 35.0),
         'EA': (-16.0, 20.0, 12.0, 50.0)
     }
 
