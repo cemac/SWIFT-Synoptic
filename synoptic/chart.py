@@ -326,7 +326,7 @@ class WAJetsWaves(SynopticChart):
 
         self.chart_type = "WA-jets-waves"
 
-        self.aej = AfricanEasterlyJet(self)
+        self.aej = AfricanEasterlyJet(self, 600)
 
 class SynthesisChart(SynopticChart):
     """Synthesis chart displaying key features for analysis.
