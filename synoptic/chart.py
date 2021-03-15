@@ -378,6 +378,8 @@ class SynopticComponent:
         'pwat': 'PWAT_P0_L200_GLL0',
         # mean sea level pressure
         'prmsl': 'PRMSL_P0_L101_GLL0',
+        # geopotential height
+        'geo': 'HGT_P0_L100_GLL0',
         # relative humidity
         'rh': 'RH_P0_L100_GLL0',
         # specific humidity, specified height level above ground ('lv_HTGL4')
@@ -609,11 +611,45 @@ class ITD(SynopticComponent):
         dewpoint = dpt_2m_masked.data
         self.lat = dpt_2m_masked.coord('latitude').points
 
+        # Create an additional mask based on geopotential height
+        # difference
+        geo = self.chart.get_data(SynopticComponent.GFS_VARS['geo'])
+        levels = [ 700, 925 ]
+        lv_coord = gfs_utils.get_level_coord(geo, 'hPa')
+        cc = gfs_utils.get_coord_constraint(lv_coord.name(), levels)
+        geo_data = geo.extract(cc)
+
+        # Calculate 700-925hPa geopotential height difference
+        geo_diff = geo_data[0, :, :] -  geo_data[1, :, :]
+
+        # Get threshold value for locating area of highest
+        # geopotential height difference
+        thresh = np.percentile(geo_diff.data, 90)
+
+        # Find maximum latitude of area of geopotential height
+        # difference above threshold
+        max_lat = []
+        ctr_list = skimage.measure.find_contours(geo_diff.data, level=thresh)
+        for c in ctr_list:
+            shp = sgeom.Polygon(c)
+            lat_index = [np.rint(x).astype(int) for x in shp.bounds[::2]]
+            lat = [self.lat[x] for x in lat_index]
+            max_lat.append(max(lat))
+
+        max_lat = max(max_lat)
+
+        # Mask dewpoint temperature north of area of highest
+        # geopotential height difference
+        _, lat_grid = np.meshgrid(self.lon, self.lat)
+        mask = lat_grid > max_lat
+        dp_masked = np.ma.masked_where(mask, dewpoint)
+        dp_masked[mask] = np.nan
+
         # Plot masked dewpoint temperature contour (ITD)
-        itd1 = ax.contour(self.lon, self.lat, dewpoint,
+        itd1 = ax.contour(self.lon, self.lat, dp_masked,
                           levels = self.dewpoint_level,
                           colors = self.col, linewidths = 3*self.lw)
-        itd2 = ax.contour(self.lon, self.lat, dewpoint,
+        itd2 = ax.contour(self.lon, self.lat, dp_masked,
                           levels = self.dewpoint_level,
                           colors = self.col2, linewidths = self.lw,
                           linestyles = 'dashed')
