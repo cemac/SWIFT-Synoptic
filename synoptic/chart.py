@@ -488,6 +488,7 @@ class MeanSeaLevelPressure(SynopticComponent):
         # Default to plot contour lines at 5 hPa intervals, 1015 bold
         self.step = 5
         self.highlight = 1015
+        self.label_contours = True
 
         # Formatting options
         self.options = {
@@ -512,6 +513,9 @@ class MeanSeaLevelPressure(SynopticComponent):
                          levels=levels,
                          linewidths=lw,
                          **self.options)
+
+        if self.label_contours:
+            ax.clabel(ctr, fmt = '%1.0f')
 
 class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
     """
