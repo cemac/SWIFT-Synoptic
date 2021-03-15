@@ -225,7 +225,7 @@ class SynopticChart:
             c.plot(ax)
 
         if dir_path is not None:
-            file_name = '{:%Y%m%d%H%M}_{:03d}.png'.format(self.date(), self.fct_hour)
+            file_name = '{:%Y%m%d_%H%M}_{:03d}_{}.png'.format(self.date(), self.fct_hour, self.chart_type.lower())
             file_path = os.path.join(dir_path, file_name)
             plt.savefig(file_path)
             plt.close()
