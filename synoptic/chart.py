@@ -621,7 +621,7 @@ class ITD(SynopticComponent):
         dpt_2m_masked = iris.util.mask_cube(dpt_2m_regridded,
                                             gradient_dpt_wrt_lat.data > self.tol)
 
-        dewpoint = dpt_2m_masked.data
+        # Adjust self.lat to account for regridding
         self.lat = dpt_2m_masked.coord('latitude').points
 
         # Create an additional mask based on geopotential height
@@ -654,9 +654,9 @@ class ITD(SynopticComponent):
         # Mask dewpoint temperature north of area of highest
         # geopotential height difference
         _, lat_grid = np.meshgrid(self.lon, self.lat)
-        mask = lat_grid > max_lat
-        dp_masked = np.ma.masked_where(mask, dewpoint)
-        dp_masked[mask] = np.nan
+
+        dpt_2m_masked = iris.util.mask_cube(dpt_2m_masked, lat_grid > max_lat)
+        dp_masked = dpt_2m_masked.data
 
         # Plot masked dewpoint temperature contour (ITD)
         itd1 = ax.contour(self.lon, self.lat, dp_masked,
