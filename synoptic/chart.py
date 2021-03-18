@@ -52,6 +52,7 @@ import iris.analysis.calculus
 import numpy as np
 import skimage.measure
 import shapely.geometry as sgeom
+from wrf import smooth2d as wrf_smooth2d
 
 #from * import gfs_utils  # works for tests but not when calling module code
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
@@ -584,11 +585,15 @@ class ITD(SynopticComponent):
         self.units = 'Celsius'
 
         # Tolerance for gradient-based masking
-        self.tol = 0.9
+        self.tol = 0.2
         self.dewpoint_level = [ 15.0 ]
 
         # Minimum number of vertices to include when plotting ITD contours
         self.min_vertices = 10
+
+        # Smoothing
+        self.apply_smooth = True
+        self.smooth_pass = 4
 
         # Formatting options
         self.options = {
@@ -600,6 +605,10 @@ class ITD(SynopticComponent):
         self.col2 = 'white'
 
     def plot(self, ax):
+
+        if self.apply_smooth:
+            # Apply smoothing
+            self.data.data = wrf_smooth2d(self.data.data, self.smooth_pass)
 
         # Calculate gradient of dewpoint temp with latitude
         gradient_dpt_wrt_lat = iris.analysis.calculus.differentiate(self.data, 'latitude')
