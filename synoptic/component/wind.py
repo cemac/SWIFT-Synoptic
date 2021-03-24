@@ -6,6 +6,12 @@ import matplotlib.patches as mpatches
 import gfs_utils
 from .component import SynopticComponent
 
+#-----------------------------------------
+
+# Wind components
+
+#-----------------------------------------
+
 class WindComponent(SynopticComponent):
     """
     Base class for wind-related synoptic components, providing utility
@@ -146,7 +152,65 @@ class WindHeightLevel(WindComponent):
                          levels = self.ws_level,
                          **self.options)
 
+class WindShear(WindComponent):
+
+    def __init__(self, chart, level1, level2):
+        super().__init__(chart, [level1, level2])
+
+    def init(self):
+        self.name = "Wind shear"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
+
+        self.plot_ctr = True
+        self.plot_qv = True
+
+        # Formatting options
+        self.qv_skip = 2
+        self.qv_options = {
+            'color': 'black',
+            'alpha': 0.2,
+            'width': 0.002,  # width relative to selected units (default = axis width)
+        }
+
+        self.ws_thres = 25
+
+        self.cm_name = 'Oranges'
+        self.cm_thres = [ self.ws_thres, None ]
+
+        self.ws_options = {
+            'cmap': self.cm_name,
+        }
+
+    def plot(self, ax):
+
+        U, V, _ = self.get_wind_components()
+
+        U_diff = U[1] - U[0]
+        V_diff = V[1] - V[0]
+
+        ws_diff = np.sqrt(U_diff**2 + V_diff**2)
+
+        if self.plot_ctr:
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=np.amax(ws_diff), alpha=0.4)
+            ctr = ax.contourf(self.lon, self.lat, ws_diff,
+                              **self.ws_options)
+
+        if self.plot_qv:
+            # Mask values below threshold
+            U_diff = np.ma.masked_where(ws_diff < self.ws_thres, U_diff)
+            V_diff = np.ma.masked_where(ws_diff < self.ws_thres, V_diff)
+            qv = ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
+                           U_diff[::self.qv_skip, ::self.qv_skip],
+                           V_diff[::self.qv_skip, ::self.qv_skip],
+                           **self.qv_options)
+
 class AfricanEasterlyJet(WindComponent):
+    """
+    African Easterly Jet
+
+    """
 
     def __init__(self, chart, level=650):
         super().__init__(chart, level)
@@ -324,57 +388,3 @@ class AfricanEasterlyJet(WindComponent):
                         )
                         ax.add_patch(p)
                     current_point = seg[i+1]
-
-class WindShear(WindComponent):
-
-    def __init__(self, chart, level1, level2):
-        super().__init__(chart, [level1, level2])
-
-    def init(self):
-        self.name = "Wind shear"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
-        self.units = None
-        self.level_units = 'hPa'
-
-        self.plot_ctr = True
-        self.plot_qv = True
-
-        # Formatting options
-        self.qv_skip = 2
-        self.qv_options = {
-            'color': 'black',
-            'alpha': 0.2,
-            'width': 0.002,  # width relative to selected units (default = axis width)
-        }
-
-        self.ws_thres = 25
-
-        self.cm_name = 'Oranges'
-        self.cm_thres = [ self.ws_thres, None ]
-
-        self.ws_options = {
-            'cmap': self.cm_name,
-        }
-
-    def plot(self, ax):
-
-        U, V, _ = self.get_wind_components()
-
-        U_diff = U[1] - U[0]
-        V_diff = V[1] - V[0]
-
-        ws_diff = np.sqrt(U_diff**2 + V_diff**2)
-
-        if self.plot_ctr:
-            self.ws_options['cmap'] = self.get_masked_colormap(val_max=np.amax(ws_diff), alpha=0.4)
-            ctr = ax.contourf(self.lon, self.lat, ws_diff,
-                              **self.ws_options)
-
-        if self.plot_qv:
-            # Mask values below threshold
-            U_diff = np.ma.masked_where(ws_diff < self.ws_thres, U_diff)
-            V_diff = np.ma.masked_where(ws_diff < self.ws_thres, V_diff)
-            qv = ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
-                           U_diff[::self.qv_skip, ::self.qv_skip],
-                           V_diff[::self.qv_skip, ::self.qv_skip],
-                           **self.qv_options)
