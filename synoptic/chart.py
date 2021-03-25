@@ -38,6 +38,7 @@ import argparse
 import math
 import warnings
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 from matplotlib.offsetbox import AnchoredText
@@ -200,6 +201,10 @@ class SynopticChart:
 
     def build(self, dir_path = None, scale_factor = 10):
         """Build chart from components"""
+        if dir_path is not None:
+            # Use non-interactive backend
+            mpl.use('agg')
+
         if self.components:
             sample_data = self.components[0].data
             if isinstance(sample_data, iris.cube.CubeList):
