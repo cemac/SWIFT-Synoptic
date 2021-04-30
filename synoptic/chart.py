@@ -70,7 +70,9 @@ class SynopticChart:
     # lat_max, lon_max).
     DOMAINS = {
         'WA': (0.0, -25.0, 40.0, 35.0),
-        'EA': (-16.0, 20.0, 12.0, 50.0)
+        'EA': (-16.0, 20.0, 15.0, 52.0),
+        # Pan Africa: 60 S to 60 N, 60 W to 90 E.
+        'PA': (-60.0, -60.0, 60.0, 90.0),
     }
 
     def __init__(self, domain, fct_timestamp, fct_hour, data_dir=None):
@@ -106,6 +108,8 @@ class SynopticChart:
                 self.domain = SynopticChart.DOMAINS['WA']
             elif arg == 'EA' or arg == 'EastAfrica':
                 self.domain = SynopticChart.DOMAINS['EA']
+            elif arg == 'PA' or arg == 'PanAfrica':
+                self.domain = SynopticChart.DOMAINS['PA']
             else:
                 raise ValueError("Unrecognised domain name")
             self.domain_name = arg
@@ -366,9 +370,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Plot synoptic chart')
 
     parser.add_argument('domain', type=str,
-                        metavar='domain', choices=['WA', 'EA'],
+                        metavar='domain', choices=['WA', 'EA', 'PA'],
                         help='''Domain specified as standardised
-                        domain name (WA or EA)''')
+                        domain name (WA, EA or PA)''')
 
     parser.add_argument('timestamp', type=str,
                         help='''Timestamp for chart data in format
