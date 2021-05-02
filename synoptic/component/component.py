@@ -49,9 +49,10 @@ class SynopticComponent:
         self.data = chart.get_data(self.gfs_vars, units=self.units)
         if level is not None:
             self.level = level
-            # Constrain data to specified level
+            # Constrain data to specified level(s)
             lv_coord = gfs_utils.get_level_coord(self.data, self.level_units)
-            cc = gfs_utils.get_coord_constraint(lv_coord.name(), self.level)
+            self.level_coord = lv_coord.name()
+            cc = gfs_utils.get_coord_constraint(self.level_coord, self.level)
             self.data = self.data.extract(cc)
         #self.backend = chart.get_backend()
         coords = ('latitude', 'longitude')
