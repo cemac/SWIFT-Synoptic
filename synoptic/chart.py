@@ -358,8 +358,8 @@ class SynthesisChart(SynopticChart):
         self.wc_925.strm_options['color'] = 'black'
         self.wc_925.strm_options['linewidth'] = 0.7
 
-        # Mid-level dry intrusion - relative humidity contours at 700 hPA
-        self.mdi_700 = MidlevelDryIntrusion(self, 700)
+        # Mid-level dry intrusion - defaults to 60% contour of min(RH700, RH600, RH500)
+        self.mdi = MidlevelDryIntrusion(self)
 
         # 925-650hPa wind shear
         self.ws_925_650 = WindShear(self, 925, 650)

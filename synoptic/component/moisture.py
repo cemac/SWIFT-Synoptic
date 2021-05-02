@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.path as mpath
 import matplotlib.patches as mpatches
+import iris.analysis
+from wrf import smooth2d as wrf_smooth2d
 
 from .component import SynopticComponent
 
@@ -8,18 +10,18 @@ class MidlevelDryIntrusion(SynopticComponent):
     """
     Mid-level dry intrusion
 
-    Relative humidity at 700hPa, 60% and 75% contours
+    Relative humidity, plotted as contours at specified level(s) and
+    threshold(s). Defaults to min(RH700, RH600, RH500), 60% threshold.
     """
-    def __init__(self, chart, level):
+    def __init__(self, chart, level=[700, 600, 500], thres=[60]):
         super().__init__(chart, level)
+        self.levels = thres
 
     def init(self):
         self.name = "Mid-level dry intrusion"
         self.gfs_vars = SynopticComponent.GFS_VARS['rh']
         self.units = 'percent'
         self.level_units = 'hPa'
-
-        self.levels = [ 60 ]
 
         self.lw = 3.0
 
@@ -34,8 +36,15 @@ class MidlevelDryIntrusion(SynopticComponent):
 
     def plot(self, ax):
 
-        # Data to plot
-        rh = self.data.data
+        if self.data.coord(self.level_coord).points.size > 1:
+            # take minimum over specified pressure levels
+            rh_min = self.data.collapsed(self.level_coord, iris.analysis.MIN)
+            rh = rh_min.data
+        else:
+            rh = self.data.data
+
+        # Apply smoothing
+        rh = wrf_smooth2d(rh, 4)
 
         # Plot relative humidity contours
         ctr = ax.contour(self.lon, self.lat, rh,
