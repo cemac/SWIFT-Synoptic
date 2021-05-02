@@ -101,7 +101,7 @@ class ITD(SynopticComponent):
 
         # Plot masked dewpoint temperature contour (ITD)
         itd1 = ax.contour(self.lon, self.lat, dp_masked,
-                         levels = self.dewpoint_level,
+                          levels = self.dewpoint_level,
                           colors = self.col, linewidths = 3*self.lw)
         itd2 = ax.contour(self.lon, self.lat, dp_masked,
                           levels = self.dewpoint_level,

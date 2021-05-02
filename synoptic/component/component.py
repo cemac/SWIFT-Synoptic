@@ -84,7 +84,7 @@ class SynopticComponent:
         Using this method means that the colours in the colour map are
         assigned across the range of values in the data rather than
         being compressed to the range of unmasked values as would be
-        the case when applying a colour mask to masked data.
+        the case when applying a colour map to masked data.
 
         """
         cm_min, cm_max = cm_range
