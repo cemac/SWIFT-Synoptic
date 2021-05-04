@@ -35,7 +35,17 @@ class MeanSeaLevelPressure(SynopticComponent):
         mslp = self.data.data
 
         pmin = np.amin(mslp)
+        try:
+            pmin = max(pmin, self.pmin)
+        except AttributeError:
+            pass
+
         pmax = np.amax(mslp)
+        try:
+            pmax = min(pmax, self.pmax)
+        except AttributeError:
+            pass
+
         levels = np.arange(pmin - pmin % self.step,
                            pmax + self.step - pmax % self.step,
                            self.step)
