@@ -24,12 +24,14 @@ class SynopticComponent:
         'prmsl': 'PRMSL_P0_L101_GLL0',
         # geopotential height
         'geo': 'HGT_P0_L100_GLL0',
+        # surface height?
+        'hgt': 'HGT_P0_L1_GLL0',
         # relative humidity
         'rh': 'RH_P0_L100_GLL0',
         # specific humidity, specified height level above ground ('lv_HTGL4')
         'spfh': 'SPFH_P0_L103_GLL0',
         # temperature on pressure levels
-        'tmp': 'TMP_P0_L100_GLL0',
+        'temp': 'TMP_P0_L100_GLL0',
         # wind components on pressure levels
         'u_lvp': 'UGRD_P0_L100_GLL0',
         'v_lvp': 'VGRD_P0_L100_GLL0',
