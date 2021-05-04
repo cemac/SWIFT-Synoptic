@@ -134,6 +134,9 @@ class WindHeightLevel(WindComponent):
         self.units = None
         self.level_units = 'm'
 
+        self.plot_ws = True
+        self.plot_strm = False
+
         self.ws_level = [ 15.0 ]
 
         self.options = {
@@ -142,15 +145,35 @@ class WindHeightLevel(WindComponent):
             'colors': 'darkgreen',
         }
 
+        # Set streamline density based on longitudinal and latitudinal
+        # extent
+        domain = np.array(self.chart.domain)
+        lon_lat = domain.reshape((2,2), order='F')[::-1]
+        delta = np.diff(lon_lat).flatten()
+
+        self.strm_options = {
+            'density': tuple(delta*0.04),
+            'linewidth': 0.4,
+            'arrowsize': 0.9,
+            'arrowstyle': '->',
+        }
+
     def plot(self, ax):
 
         # Get U/V wind components
-        _, _, windspeed = self.get_wind_components()
+        U, V, windspeed = self.get_wind_components()
 
-        # Plot 10m windspeed 15 m/s contour
-        ctr = ax.contour(self.lon, self.lat, windspeed,
-                         levels = self.ws_level,
-                         **self.options)
+        if self.plot_ws:
+            # Plot 10m windspeed 15 m/s contour
+            ctr = ax.contour(self.lon, self.lat, windspeed,
+                             levels = self.ws_level,
+                             **self.options)
+
+        if self.plot_strm:
+            # Plot streamlines
+            strm = ax.streamplot(self.lon, self.lat, U, V,
+                                 **self.strm_options)
+
 
 class WindShear(WindComponent):
 
