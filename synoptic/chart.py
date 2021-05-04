@@ -280,12 +280,13 @@ class SynopticChart:
         return fig, ax
 
 class LowLevelChart(SynopticChart):
-    """Low-level chart displaying windspeed, streamlines, ITD based on
-    dewpoint temperature, mean sea level pressure and pressure
-    tendency.
+    """
+    Chart displaying domain specific low-level features
 
-    Note that this chart has been developed for West Africa. Extension
-    to other domains may require some adjustments.
+    Low-level chart displaying combination of windspeed, streamlines,
+    ITD based on dewpoint temperature, mean sea level pressure and
+    pressure tendency. Features are selected as appropriate for the
+    specified domain.
 
     """
 
@@ -294,20 +295,62 @@ class LowLevelChart(SynopticChart):
 
         self.chart_type = "low-level"
 
-        # Mean sea level pressure
-        self.mslp = MeanSeaLevelPressure(self)
+        if self.domain_name == 'WA':
+            # Mean sea level pressure
+            self.mslp = MeanSeaLevelPressure(self)
 
-        # Inter-tropical discontinuity
-        self.itd = ITD(self)
+            # Inter-tropical discontinuity
+            self.itd = ITD(self)
 
-        # Windspeed and streamlines at 925 hPa
-        self.wc_925 = WindPressureLevel(self, 925)
+            # Windspeed and streamlines at 925 hPa
+            self.wc_925 = WindPressureLevel(self, 925)
 
-        # 24 hour change in mean sea level pressure
-        self.mslp_24 = MeanSeaLevelPressureChange(self)
+            # 24 hour change in mean sea level pressure
+            self.mslp_24 = MeanSeaLevelPressureChange(self)
 
-        # Windspeed at 10m, 15 m/s contour
-        self.wc_10m = WindHeightLevel(self, 10)
+            # Windspeed at 10m, 15 m/s contour
+            self.wc_10m = WindHeightLevel(self, 10)
+
+        elif self.domain_name == 'EA':
+            # 24 hour change in mean sea level pressure
+            self.mslp_24 = MeanSeaLevelPressureChange(self)
+
+            # Convergence of 10m winds
+            self.wc_10m = WindHeightLevel(self, 10)
+            self.wc_10m.plot_ws = False
+            self.wc_10m.plot_strm = True
+
+            # Streamlines at 700 hPa
+            self.wc_700 = WindPressureLevel(self, 700)
+            self.wc_700.plot_ws = False
+            self.wc_700.strm_options['color'] = 'black'
+            self.wc_700.strm_options['linewidth'] = 0.7
+
+            # Relative humidity at 700 hPa above 80%
+            self.rh_700 = MidlevelDryIntrusion(self, [700], [80])
+            self.rh_700.marker_thres = 1000
+            self.rh_700.options['colors'] = 'purple'
+            self.rh_700.options['linewidths'] = [ 2.0 ]
+
+            # Dewpoint temperature at 2m
+            self.dpt = DPT(self)
+
+            # Mid level dry intrusion
+            self.mdi = MidlevelDryIntrusion(self)
+
+        elif self.domain_name == 'PA':
+            # Mean sea level pressure
+            self.mslp = MeanSeaLevelPressure(self)
+
+            # Plot MSLP at 1020, 1024, 1028 and 1032 hPa
+            self.mslp.pmin = 1020
+            self.mslp.pmax = 1032
+            self.mslp.step = 4
+            self.mslp.highlight = 1020
+
+            # Windspeed and streamlines at 925 hPa
+            self.wc_925 = WindPressureLevel(self, 925)
+
 
 class WAJetsWaves(SynopticChart):
     """Chart displaying jets and waves for West Africa.
