@@ -41,6 +41,10 @@ class SynopticComponent:
         'v_lvh': 'VGRD_P0_L103_GLL0',
         # surface pressure??
         'pres': 'PRES_P0_L1_GLL0',
+        # CAPE - convective available potential energy
+        'cape': 'CAPE_P0_L1_GLL0',
+        # CIN - convective inhibition
+        'cin': 'CIN_P0_L1_GLL0',
     }
 
     def __init__(self, chart, level=None):
