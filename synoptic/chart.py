@@ -374,6 +374,63 @@ class WAJetsWaves(SynopticChart):
 
         self.aej = AfricanEasterlyJet(self, 600)
 
+class ConvectiveChart(SynopticChart):
+    """Chart displaying convection for West Africa.
+
+    Features to be plotted:
+    * Measures of convectively favourable conditions. Consider a choice or combination of
+      - PW/Moisture depth.
+      - CAPE or K Index
+      - CIN
+    * Dynamical features favouring convection:
+      - Low level convergence
+      - regions of significant 24h pressure difference (from low-level chart)
+      - midlevel (maybe 850 hPa) vortices?
+
+    * Features from the other charts:
+      - topography;
+      - dry intrusions;
+      - AEJ and wind-shear.
+
+    """
+
+    def __init__(self, domain, fct_timestamp, fct_hour, data_dir=None):
+        super().__init__(domain, fct_timestamp, fct_hour, data_dir)
+
+        self.chart_type = "convective"
+
+        #self.pwat = PWAT(self)
+        self.md = MoistureDepth(self)
+        self.cape = CAPE(self)
+        self.cin = CIN(self)
+
+        # Inter-tropical discontinuity
+        self.itd = ITD(self)
+
+        # Low level convergence - infer from streamlines?
+        # Windspeed and streamlines at 925 hPa
+        self.wc_925 = WindPressureLevel(self, 925)
+        self.wc_925.plot_ws = False
+        self.wc_925.strm_options['color'] = 'black'
+        self.wc_925.strm_options['linewidth'] = 0.7
+
+        # 24 hour change in mean sea level pressure
+        self.mslp_24 = MeanSeaLevelPressureChange(self)
+
+        # Mid level (850 hPa) vortices
+
+        # Mid-level dry intrusion - defaults to 60% contour of min(RH700, RH600, RH500)
+        self.mdi = MidlevelDryIntrusion(self)
+
+        # African Easterly Jet
+        self.aej = AfricanEasterlyJet(self, 600)
+        self.aej.ws_options['alpha'] = 0.01
+
+        # 925-650hPa wind shear
+        self.ws_925_650 = WindShear(self, 925, 650)
+        self.ws_925_650.ws_thres = 15
+        self.ws_925_650.qv_options['alpha'] = 0.3
+
 class SynthesisChart(SynopticChart):
     """Synthesis chart displaying key features for analysis.
 
