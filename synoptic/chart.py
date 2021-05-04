@@ -256,7 +256,11 @@ class SynopticChart:
         # Add coastlines and borders
         map_alpha = 0.9
         ax.coastlines(color='black', alpha=map_alpha)
-        ax.add_feature(cfeature.BORDERS, color='black', alpha=map_alpha)
+        ax.add_feature(cfeature.BORDERS, color='gray', alpha=map_alpha)
+
+        ax.add_feature(cfeature.LAND, alpha=0.5)
+        ax.add_feature(cfeature.LAKES, alpha=0.5, edgecolor = '#6e9ee1')
+        ax.add_feature(cfeature.OCEAN, alpha=0.5)
 
         # Add formatted date string
         date_str = '{:%Y%m%d %H:%M} + {:d} hours'.format(self.date(), self.fct_hour)
