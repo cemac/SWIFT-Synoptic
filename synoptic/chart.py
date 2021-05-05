@@ -378,6 +378,9 @@ class WAJetsWaves(SynopticChart):
 
         self.aej = AfricanEasterlyJet(self, 600)
 
+        # Tropical Easterly Jet
+        self.tej = TropicalEasterlyJet(self)
+
 class ConvectiveChart(SynopticChart):
     """Chart displaying convection for West Africa.
 
@@ -467,6 +470,9 @@ class SynthesisChart(SynopticChart):
 
         # 925-650hPa wind shear
         self.ws_925_650 = WindShear(self, 925, 650)
+
+        # Tropical Easterly Jet
+        self.tej = TropicalEasterlyJet(self)
 
 #---------------------------------------------------------------
 
