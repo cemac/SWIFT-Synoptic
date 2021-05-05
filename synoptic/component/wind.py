@@ -1,7 +1,10 @@
+import math
+
 import numpy as np
 import skimage.measure
 import shapely.geometry as sgeom
 import matplotlib.patches as mpatches
+from matplotlib.path import Path
 
 import gfs_utils
 from .component import SynopticComponent
@@ -411,3 +414,220 @@ class AfricanEasterlyJet(WindComponent):
                         )
                         ax.add_patch(p)
                     current_point = seg[i+1]
+
+class TropicalEasterlyJet(WindComponent):
+    """
+    Tropical Easterly Jet
+
+    Two cores above 35 kt, at 100 and 200 hPa, around 15°N and 8°N respectively.
+
+    """
+
+    def __init__(self, chart, level=200):
+        super().__init__(chart, level)
+
+    def init(self):
+        self.name = "Tropical Easterly Jet"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
+
+        self.plot_ws = False
+        self.plot_core = True
+        self.plot_jet = True
+
+        self.thres_axis = 18 # FCHB: 35 kt = 18 m/s
+        self.thres_core = 25 # FCHB: 40-50 kt = 20-25 m/s
+        self.thres_core_percentile = 95 # Eniola @ NiMET says no set
+                                        # threshold for core
+
+        # Formatting options
+        self.lw = 2.0
+        # TODO select preferred colour
+        # self.color = '#b34c2e' # Colour value derived from FCHB - Table 11.1
+        # self.color = '#c3704b' # Colour value derived from FCHB - section 11.7
+        # self.color = '#b99356' # Colour value derived from FCHB - Figure 11.1
+        self.color = '#be933a' # Colour value derived from FCHB - Figure 11.2
+
+        self.cm_name = 'Oranges'
+        self.cm_thres = [ self.thres_axis, None ]
+
+        self.ws_options = {
+            'cmap': self.cm_name,
+        }
+
+        self.core_options = {
+            'edgecolor': self.color,
+            'fill': None,
+            'linewidth': self.lw/2,
+        }
+
+        self.core_label_fontsize = 8.0
+        self.core_label_units = 'hPa'
+        self.core_label_options = {
+            'xytext': np.array([-2, -1.25])*self.core_label_fontsize,
+            'textcoords': 'offset points',
+            'fontsize': self.core_label_fontsize,
+        }
+
+        self.arrow_size = 2.6
+        self.arrow_interval = 2.0
+        self.arrow_options = {
+            'color': self.color,
+            'linewidth': self.lw,
+            'arrowstyle': '->,head_length=0.5,head_width=0.3',
+            # set mutation_scale as in matplotlib.streamplot():
+            'mutation_scale': 10 * self.arrow_size,
+        }
+
+        self.path_options = {
+            'color': self.color,
+            'linewidth': self.lw,
+            'fill': False,
+        }
+
+    def plot(self, ax):
+
+        U, V, windspeed = self.get_wind_components()
+
+        angle = 0
+
+        # Set mask to analyse windspeed in relevant region i.e. around
+        # 15N for core at 100hPa, around 8N for core at 200hPa
+        _, lat_grid = np.meshgrid(self.lon, self.lat)
+        lat_min, lat_max = (12, 18) if self.level == 100 else (5, 11)
+        lat_mask = (lat_grid < lat_min) | (lat_grid > lat_max)
+
+        # Mask windspeed below specified threshold
+        ws_mask = (windspeed < self.thres_axis)
+
+        if self.plot_ws:
+            # Plot windspeed contours
+            max_ws = np.amax(windspeed)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
+            ctr = ax.contourf(self.lon, self.lat, windspeed,
+                              **self.ws_options)
+
+        if self.plot_jet:
+            # Define mask for jet axis
+            mask = lat_mask | ws_mask
+
+            # Mask wind components using NaNs because streamplot
+            # doesn't seem to respect masked arrays
+            U[mask] = np.nan
+            V[mask] = np.nan
+
+            # Mask windspeed
+            ws_masked = np.ma.masked_where(mask, windspeed)
+
+            # Select seed point(s) corresponding to maximum windspeed
+            seed_index = np.unravel_index(np.argmax(ws_masked, axis=None), ws_masked.shape)
+            seed_index = np.array(seed_index, ndmin=2)
+            seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]] for x in seed_index])
+
+            # Get streamline through specified seed point
+            strm = ax.streamplot(self.lon, self.lat, U, V,
+                                 start_points=seed_points,
+                                 arrowstyle='-',
+                                 linewidth=0)
+
+            segments = strm.lines.get_segments()
+            num_seg = len(segments)
+            if num_seg == 0:
+                return
+
+            # Get line segments, place arrows and get vertices for tramlines
+            # TODO add jet entrance/exit markers
+            verts = []
+            current_point = None
+            for j, seg in enumerate(segments):
+                if j == num_seg//2:
+                    # Get angle of central line segment
+                    tdx, tdy = seg[-1] - seg[0]
+                    angle = math.tan(tdy/tdx) * 180/math.pi
+                    print("angle across seg:", angle)
+                for i, s in enumerate(seg[:-1]):
+                    if not all(s == current_point):
+                        # Reset distance sum
+                        dist_sum = 0
+                    # Check length of segment and add patches at
+                    # suitable intervals
+                    dx, dy = seg[i+1] - s
+                    seg_len = np.hypot(dx, dy)
+                    dist_sum = dist_sum + seg_len
+                    while dist_sum > self.arrow_interval:
+                        dist_sum -= self.arrow_interval
+                        # Find start and end points for arrow patch
+                        v = np.array([dx, dy])
+                        loc = (seg_len - dist_sum)/seg_len
+                        start = s + loc*v
+                        end = start + 0.1*v/seg_len
+                        # Draw patch
+                        p = mpatches.FancyArrowPatch(
+                            start, end, transform=ax.transData,
+                            **self.arrow_options
+                        )
+                        ax.add_patch(p)
+
+                    n = np.array([-dy, dx])
+                    n = 0.25*n/np.linalg.norm(n)
+                    verts.append([s+n, s-n])
+                    current_point = seg[i+1]
+                verts.append([current_point+n, current_point-n])
+
+            # Rearrange array to get vertices for parallel tramlines
+            verts = np.stack(verts, axis=1)
+            for v in verts:
+                path = Path(v)
+                patch = mpatches.PathPatch(path, **self.path_options)
+                ax.add_patch(patch)
+
+        if self.plot_core:
+
+            # Mask windspeed to relevant region
+            ws_masked = np.ma.masked_where(lat_mask, windspeed)
+
+            # Use maximum of specified core threshold and specified percentile
+            ws_thres = np.percentile(ws_masked[~ws_masked.mask], self.thres_core_percentile)
+            ws_thres = max(self.thres_core, ws_thres)
+            print("Using threshold for core:", ws_thres)
+
+            # Get contours for core threshold windspeed
+            ctr_list = skimage.measure.find_contours(ws_masked, level=ws_thres)
+            for c in ctr_list:
+                shp = sgeom.Polygon(c)
+
+                # Does this contain a point of maximum windspeed?
+                # FIXME what if not self.plot_jet (i.e. seed_index not defined)?
+                contains_seed = False
+                for x in seed_index:
+                    if shp.intersects(sgeom.Point((x))):
+                        contains_seed = True
+                if not contains_seed:
+                    continue
+
+                # Translate centroid coordinates to lon/lat
+                centroid = shp.centroid.coords[0]
+                xy = [self.lon[np.rint(centroid[1]).astype(int)],
+                      self.lat[np.rint(centroid[0]).astype(int)]]
+
+                # Use contour bounds to get dimensions for core
+                it = iter(shp.bounds)
+                bounds = np.array([[self.lon[np.rint(next(it)).astype(int)],
+                                    self.lat[np.rint(x).astype(int)]] for x in it])
+                dx, dy = np.abs(bounds[1] - bounds[0])
+
+                # Draw core as ellipse around centroid
+                p = mpatches.Ellipse(xy=xy,
+                                     width=dx,
+                                     height=dy,
+                                     angle=angle,
+                                     **self.core_options)
+                ax.add_artist(p)
+
+                # Add label to indicate core pressure level
+                loc = xy + np.array([0, dy/2])
+                ax.annotate(f'{self.level} {self.level_units}',
+                            xy=loc,
+                            **self.core_label_options)
+

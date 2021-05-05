@@ -1,5 +1,8 @@
 from .itd import ITD
-from .wind import AfricanEasterlyJet, WindPressureLevel, WindHeightLevel, WindShear
+from .wind import (
+    WindPressureLevel, WindHeightLevel, WindShear,
+    AfricanEasterlyJet, TropicalEasterlyJet,
+)
 from .moisture import (
     MidlevelDryIntrusion, MoistureDepth,
 )
