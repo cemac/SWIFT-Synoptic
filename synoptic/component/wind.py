@@ -1,4 +1,5 @@
 import math
+import warnings
 
 import numpy as np
 import skimage.measure
@@ -47,6 +48,10 @@ class WindComponent(SynopticComponent):
         vc = gfs_utils.get_coord_constraint(v_lv_coord.name(), level)
         v = v.extract(vc)
 
+        def handle_error(lvl, units):
+            err_msg = f'Could not extract wind component data for specified level: {lvl} {units}'
+            warnings.warn(err_msg)
+
         if type(level) is list:
             U = []
             V = []
@@ -54,13 +59,21 @@ class WindComponent(SynopticComponent):
             for lvl in level:
                 ui = u.extract(gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl))
                 vi = v.extract(gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl))
-                U.append(ui.data)
-                V.append(vi.data)
-                windspeed.append(np.sqrt(ui.data**2 + vi.data**2))
+                try:
+                    U.append(ui.data)
+                    V.append(vi.data)
+                    windspeed.append(np.sqrt(ui.data**2 + vi.data**2))
+                except AttributeError:
+                    handle_error(lvl, self.level_units)
+                    raise
         else:
-            U = u.data
-            V = v.data
-            windspeed = np.sqrt(U**2 + V**2)
+            try:
+                U = u.data
+                V = v.data
+                windspeed = np.sqrt(U**2 + V**2)
+            except AttributeError:
+                handle_error(level, self.level_units)
+                raise
 
         return (U, V, windspeed)
 
