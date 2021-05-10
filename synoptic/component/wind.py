@@ -60,16 +60,18 @@ class WindComponent(SynopticComponent):
                 ui = u.extract(gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl))
                 vi = v.extract(gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl))
                 try:
-                    U.append(ui.data)
-                    V.append(vi.data)
-                    windspeed.append(np.sqrt(ui.data**2 + vi.data**2))
+                    Ui = ui.data.astype(np.float64)
+                    Vi = vi.data.astype(np.float64)
+                    U.append(Ui)
+                    V.append(Vi)
+                    windspeed.append(np.sqrt(Ui**2 + Vi**2))
                 except AttributeError:
                     handle_error(lvl, self.level_units)
                     raise
         else:
             try:
-                U = u.data
-                V = v.data
+                U = u.data.astype(np.float64)
+                V = v.data.astype(np.float64)
                 windspeed = np.sqrt(U**2 + V**2)
             except AttributeError:
                 handle_error(level, self.level_units)
