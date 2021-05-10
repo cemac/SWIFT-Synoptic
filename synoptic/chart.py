@@ -381,6 +381,9 @@ class WAJetsWaves(SynopticChart):
         # Tropical Easterly Jet
         self.tej = TropicalEasterlyJet(self)
 
+        # Subtropical Jet
+        self.stj = SubtropicalJet(self)
+
 class ConvectiveChart(SynopticChart):
     """Chart displaying convection for West Africa.
 
@@ -473,6 +476,9 @@ class SynthesisChart(SynopticChart):
 
         # Tropical Easterly Jet
         self.tej = TropicalEasterlyJet(self)
+
+        # Subtropical Jet
+        self.stj = SubtropicalJet(self)
 
 #---------------------------------------------------------------
 
