@@ -6,6 +6,8 @@ import skimage.measure
 import shapely.geometry as sgeom
 import matplotlib.patches as mpatches
 from matplotlib.path import Path
+from windspharm.iris import VectorWind
+from wrf import smooth2d as wrf_smooth2d
 
 import gfs_utils
 from .component import SynopticComponent
@@ -790,4 +792,108 @@ class SubtropicalJet(WindComponent):
 
             self.plot_jet_axis(ax, mask, self.plot_core)
 
+
+class AfricanEasterlyWaves(WindComponent):
+    """
+    African Easterly Waves
+
+    """
+
+    def __init__(self, chart, level=600):
+        super().__init__(chart, level)
+
+    def init(self):
+        self.name = "African Easterly Waves"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
+
+        self.options = {
+            'linewidths': 3.0,
+            'colors': 'black',
+        }
+
+    def plot(self, ax):
+
+        # Get global u/v wind data
+        ug, vg = self.chart.get_data(self.gfs_vars, apply_domain=False)
+
+        # Get level coordinates for U/V wind components
+        ug_lv_coord = gfs_utils.get_level_coord(ug, self.level_units)
+        vg_lv_coord = gfs_utils.get_level_coord(vg, self.level_units)
+
+        # Constrain to specified level(s)
+        ugc = gfs_utils.get_coord_constraint(ug_lv_coord.name(), self.level)
+        ug = ug.extract(ugc)
+
+        vgc = gfs_utils.get_coord_constraint(vg_lv_coord.name(), self.level)
+        vg = vg.extract(vgc)
+
+        # Set up windspharm wind vector object
+        w = VectorWind(ug, vg)
+
+        # Nondivergent component of wind
+        upsi, vpsi = w.nondivergentcomponent()
+        Vpsi = VectorWind(upsi, vpsi)
+
+        # Compute streamfunction and relative vorticity
+        psi = Vpsi.streamfunction()
+        xi = Vpsi.vorticity()
+
+        # TODO partition streamfunction vorticity into curvature and
+        # shear components
+
+        # Apply domain constraint
+        domain_constraint = gfs_utils.get_domain_constraint(self.chart.domain)
+        upsi = upsi.extract(domain_constraint)
+        vpsi = vpsi.extract(domain_constraint)
+        psi = psi.extract(domain_constraint)
+        xi = xi.extract(domain_constraint)
+
+        # Apply smoothing to vorticity, for some reason have to swap
+        # axes back afterwards
+        xi_data = wrf_smooth2d(xi.data, 4)
+        xi_data = np.swapaxes(xi_data, 0, 1)
+
+        # Get gridpoints/spacing for calculation of partial derivatives
+        lats = upsi.coord('latitude').points
+        lons = upsi.coord('longitude').points
+        ddeg = abs(lats[1] - lats[0])
+        drad = np.pi * ddeg / 180.
+
+        # Calculate gradients (should this be with respect to
+        # underlying coordinates in degrees or radians?)
+        dxidlat, dxidlon = np.gradient(xi_data, lats, lons)
+
+        # Advection of streamfunction vorticity by non-divergent wind
+        # = -(Vpsi . del_h xi)
+        advec = -(upsi.data * dxidlon + vpsi.data * dxidlat)
+
+        # Masking rules from Berry & Thorncroft 2007
+
+        # A1. Mask streamfunction curvature vorticity to exclude AEW
+        # ridges axes or weak systems
+        K1T = 0.5 * 10**-5  # s^-1
+        m1 = xi_data < K1T
+        m1r = xi_data > -K1T
+
+        # A2. Remove "pseudoridge" axes in nondivergent flow that is
+        # highly cyclonically curved
+        K2T = 0  # m s^-3
+        dadlat, dadlon = np.gradient(advec, lats, lons)
+        m2 = (upsi.data * dadlon + vpsi.data * dadlat) < K2T
+
+        # A3. Removes trough axes in westerly flow
+        K3T = 0  # m s^-1
+        m3 = upsi.data > K3T
+
+        trough_mask = m1 | m2 | m3
+        troughs = np.ma.masked_where(trough_mask, advec)
+
+        ridge_mask = m1r | ~m2 | m3
+        ridges = np.ma.masked_where(ridge_mask, advec)
+
+        ax.contour(self.lon, self.lat, troughs, levels = 0, **self.options)
+        ax.contour(self.lon, self.lat, ridges, levels = 0, **self.options,
+                   linestyles="dotted")
 

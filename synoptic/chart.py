@@ -161,7 +161,7 @@ class SynopticChart:
             raise ValueError("{:s} is not a file", file_path)
         return file_path
 
-    def get_data(self, gfs_vars, units=None, delta=None):
+    def get_data(self, gfs_vars, units=None, delta=None, apply_domain=True):
 
         if delta is None:
             timestamp = self.fct_timestamp
@@ -192,9 +192,10 @@ class SynopticChart:
             time_constraint = gfs_utils.get_time_constraint(fct_date, self.fct_hour)
             c = c.extract(time_constraint)
 
-            # Constrain to specified domain
-            domain_constraint = gfs_utils.get_domain_constraint(self.domain)
-            c = c.extract(domain_constraint)
+            if apply_domain:
+                # Constrain to specified domain
+                domain_constraint = gfs_utils.get_domain_constraint(self.domain)
+                c = c.extract(domain_constraint)
 
             rtn.append(c)
 
