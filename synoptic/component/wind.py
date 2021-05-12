@@ -840,9 +840,6 @@ class AfricanEasterlyWaves(WindComponent):
         psi = Vpsi.streamfunction()
         xi = Vpsi.vorticity()
 
-        # TODO partition streamfunction vorticity into curvature and
-        # shear components
-
         # Apply domain constraint
         domain_constraint = gfs_utils.get_domain_constraint(self.chart.domain)
         upsi = upsi.extract(domain_constraint)
@@ -850,16 +847,33 @@ class AfricanEasterlyWaves(WindComponent):
         psi = psi.extract(domain_constraint)
         xi = xi.extract(domain_constraint)
 
-        # Apply smoothing to vorticity, for some reason have to swap
-        # axes back afterwards
-        xi_data = wrf_smooth2d(xi.data, 4)
-        xi_data = np.swapaxes(xi_data, 0, 1)
-
         # Get gridpoints/spacing for calculation of partial derivatives
         lats = upsi.coord('latitude').points
         lons = upsi.coord('longitude').points
         ddeg = abs(lats[1] - lats[0])
         drad = np.pi * ddeg / 180.
+
+        # Partition streamfunction vorticity into curvature and shear
+        # components
+
+        # Bell and Keyser 1993 Appendix equation A.3b
+        # Relative curvature vorticity:
+        # V dalpha/ds = 1/V^2[u^2 dv/dx - v^2 du/dy - uv(du/dx - dv/dy)]
+
+        # Calculate gradients (should this be with respect to
+        # underlying coordinates in degrees or radians?)
+        u = upsi.data
+        v = vpsi.data
+        dudy, dudx = np.gradient(u, lats, lons)
+        dvdy, dvdx = np.gradient(v, lats, lons)
+        V = np.sqrt(u**2 + v**2)
+
+        xi_curv = (1/V**2) * (u**2 * dvdx - v**2 * dudy - u*v*(dudx - dvdy))
+
+        # Apply smoothing to vorticity, for some reason have to swap
+        # axes back afterwards
+        xi_data = wrf_smooth2d(xi_curv, 4)
+        xi_data = np.swapaxes(xi_data, 0, 1)
 
         # Calculate gradients (should this be with respect to
         # underlying coordinates in degrees or radians?)
