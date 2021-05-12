@@ -385,6 +385,9 @@ class WAJetsWaves(SynopticChart):
         # Subtropical Jet
         self.stj = SubtropicalJet(self)
 
+        # African Easterly Waves
+        self.aew = AfricanEasterlyWaves(self)
+
 class ConvectiveChart(SynopticChart):
     """Chart displaying convection for West Africa.
 
@@ -462,6 +465,9 @@ class SynthesisChart(SynopticChart):
         # African Easterly Jet
         self.aej = AfricanEasterlyJet(self, 600)
         self.aej.plot_ws = False
+
+        # African Easterly Waves
+        self.aew = AfricanEasterlyWaves(self)
 
         # Windspeed and streamlines at 925 hPa
         self.wc_925 = WindPressureLevel(self, 925)
