@@ -388,6 +388,10 @@ class WAJetsWaves(SynopticChart):
         # African Easterly Waves
         self.aew = AfricanEasterlyWaves(self)
 
+        # Moisture depth
+        self.md = MoistureDepth(self)
+        self.md.cm_alpha = 0.6
+
 class ConvectiveChart(SynopticChart):
     """Chart displaying convection for West Africa.
 

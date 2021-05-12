@@ -107,7 +107,7 @@ class MoistureDepth(SynopticComponent):
         # Colour map settings
         self.cm_name = 'BuGn'
         self.cm_thres = [ 2000, None ]
-
+        self.cm_alpha = None
         self.cm_range = [ 0, 0.9 ]
 
     def plot(self, ax):
@@ -151,6 +151,7 @@ class MoistureDepth(SynopticComponent):
 
         # Set up colour map
         self.options['cmap'] = self.get_masked_colormap(val_max=np.amax(md),
+                                                        alpha=self.cm_alpha,
                                                         cm_range=self.cm_range)
 
         # Plot moisture depth
