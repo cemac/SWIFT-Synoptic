@@ -38,7 +38,7 @@ class MidlevelDryIntrusion(SynopticComponent):
     def plot(self, ax):
 
         if self.data.coord(self.level_coord).points.size > 1:
-            # take minimum over specified pressure levels
+            # Take minimum over specified pressure levels
             rh_min = self.data.collapsed(self.level_coord, iris.analysis.MIN)
             rh = rh_min.data
         else:
@@ -143,7 +143,7 @@ class MoistureDepth(SynopticComponent):
 
         svp = (6.11*10.0**((7.5*temp_850_C.data)/(237.3+temp_850_C.data)))*100.0
 
-        # SVD = SVP / R * T  # R is gas constant for 1kg water vapour, T is temperature in Kelvin
+        # SVD = SVP / (R * T)  # R is gas constant for 1kg water vapour, T is temperature in Kelvin
         svd = svp/(461.5*temp_850.data)
 
         # MD = Z + PW/SVD  # Z is geopotential height (at surface?)
