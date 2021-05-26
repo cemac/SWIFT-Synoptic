@@ -515,7 +515,7 @@ def parse_args():
     parser.add_argument('chart_type', nargs='?', type=str,
                         metavar="chart_type", choices=["low", "jets", "conv", "synth"],
                         default="low",
-                        help='''Chart type (low, jets, conv or synth)''')
+                        help='''Chart type (low, jets, conv or synth) (default: low)''')
 
     parser.add_argument('-o', '--output-dir', nargs='?', type=str,
                         dest='output_dir', default=None,
