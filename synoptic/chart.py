@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 """SWIFT automated synoptic charts
 
+Plot automatically-generated charts of synoptic weather features such
+as jets, convergence lines, troughs and waves across African domains.
+
 This module was developed by CEMAC as part of the GCRF African Swift
-Project. This script allows automated plotting of synoptic features
-across African domains.
+Project.
 
 .. module:: chart
    :synopsis: SWIFT automated synoptic charts
@@ -25,7 +27,7 @@ Example::
         <forecast_hour> Forecast hour as non-negative integer multiple
                  of 3 (max 72)
 
-        <chart_type> Chart type (low, jets, conv or synth)
+        <chart_type> Chart type (low, jets, conv or synth) (default: low)
 
 """
 from __future__ import (absolute_import, division, print_function)
