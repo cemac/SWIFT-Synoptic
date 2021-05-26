@@ -249,12 +249,13 @@ class SynopticChart:
         ax.set_axis_off()
 
         # Add gridlines
-        grid_col = 'lightsteelblue'
+        grid_col = '#53606d'
+        grid_label_style = { 'color': grid_col }
         gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True, zorder=1.5, color=grid_col)
         gl.xlocator = mticker.FixedLocator(np.arange(-60, 90, 10))
         gl.ylocator = mticker.FixedLocator(np.arange(-60, 60, 10))
-        gl.xlabel_style = { 'color': grid_col}
-        gl.ylabel_style = { 'color': grid_col}
+        gl.xlabel_style = grid_label_style
+        gl.ylabel_style = grid_label_style
 
         # Add coastlines and borders
         map_alpha = 0.9
