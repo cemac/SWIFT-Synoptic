@@ -2,14 +2,14 @@ import numpy as np
 
 from wrf import smooth2d as wrf_smooth2d
 
-import gfs_utils
 from .component import SynopticComponent
 
-#-----------------------------------------
+# -----------------------------------------
 
 # GFS components
 
-#-----------------------------------------
+# -----------------------------------------
+
 
 class GFSComponent(SynopticComponent):
     """
@@ -38,8 +38,8 @@ class GFSComponent(SynopticComponent):
 
         # Formatting options
         self.options = {
-            'linewidths': [ self.lw ],
-            'linestyles': [ self.ls ],
+            'linewidths': [self.lw],
+            'linestyles': [self.ls],
         }
         try:
             self.options[self.color_var] = self.color_val
@@ -74,7 +74,7 @@ class GFSComponent(SynopticComponent):
                 ctr = ax.contour(self.lon, self.lat, z,
                                  **self.options)
 
-            ax.clabel(ctr, fmt = '%1.0f')
+            ax.clabel(ctr, fmt='%1.0f')
 
 
 class CAPE(GFSComponent):
@@ -101,8 +101,9 @@ class CAPE(GFSComponent):
         self.color_var = 'cmap'
         self.color_val = 'Blues'
 
-        self.cm_thres = [ self.thres_min, None ]
+        self.cm_thres = [self.thres_min, None]
         # self.cm_range = [ 0.45, 1 ]
+
 
 class CIN(GFSComponent):
     """
@@ -128,7 +129,8 @@ class CIN(GFSComponent):
 
         self.color_var = 'cmap'
         self.color_val = 'RdPu'
-        self.cm_range = [ 0.9, 0.5 ]
+        self.cm_range = [0.9, 0.5]
+
 
 class PWAT(GFSComponent):
     """
@@ -150,7 +152,8 @@ class PWAT(GFSComponent):
         # Formatting options
         self.color_val = 'Purples'
 
-        self.cm_thres = [ None, None ]
+        self.cm_thres = [None, None]
+
 
 class DPT(GFSComponent):
     """

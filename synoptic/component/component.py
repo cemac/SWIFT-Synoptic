@@ -5,11 +5,12 @@ import matplotlib.colors as mc
 
 import gfs_utils
 
-#-----------------------------------------
+# -----------------------------------------
 
 # Synoptic components
 
-#-----------------------------------------
+# -----------------------------------------
+
 
 class SynopticComponent:
     """ Synoptic chart component """
@@ -60,7 +61,7 @@ class SynopticComponent:
             self.level_coord = lv_coord.name()
             cc = gfs_utils.get_coord_constraint(self.level_coord, self.level)
             self.data = self.data.extract(cc)
-        #self.backend = chart.get_backend()
+        # self.backend = chart.get_backend()
         coords = ('latitude', 'longitude')
         if isinstance(self.data, iris.cube.CubeList):
             self.lat, self.lon = [self.data[0].coord(x).points for x in coords]
@@ -81,7 +82,8 @@ class SynopticComponent:
         # chart that returns the plotting apparatus
         raise RuntimeError("Not implemented")
 
-    def get_masked_colormap(self, name=None, cm_range=[0,1], res=256, alpha=None,
+    def get_masked_colormap(self, name=None, cm_range=[0, 1], res=256,
+                            alpha=None,
                             thres_min=None, thres_max=None,
                             val_min=0, val_max=1, mask_color=[1, 1, 1, 0]):
         """
@@ -101,7 +103,8 @@ class SynopticComponent:
         cmap_hi = mcm.get_cmap(self.cm_name if name is None else name, 2*res)
 
         # Create a colour map based on specified range
-        cmap_sampled = mc.ListedColormap(cmap_hi(np.linspace(cm_min, cm_max, res)))
+        cmh = cmap_hi(np.linspace(cm_min, cm_max, res))
+        cmap_sampled = mc.ListedColormap(cmh)
         cmap = cmap_sampled(np.linspace(0, 1, res))
 
         if alpha is not None:

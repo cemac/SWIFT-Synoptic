@@ -7,6 +7,7 @@ from wrf import smooth2d as wrf_smooth2d
 import gfs_utils
 from .component import SynopticComponent
 
+
 class MidlevelDryIntrusion(SynopticComponent):
     """
     Mid-level dry intrusion
@@ -30,8 +31,8 @@ class MidlevelDryIntrusion(SynopticComponent):
 
         # Formatting options
         self.options = {
-            'linewidths': [ self.lw ],
-            'linestyles': [ 'solid' ],
+            'linewidths': [self.lw],
+            'linestyles': ['solid'],
             'colors': '#198dd5'
         }
 
@@ -51,7 +52,7 @@ class MidlevelDryIntrusion(SynopticComponent):
         ctr = ax.contour(self.lon, self.lat, rh,
                          levels=self.levels,
                          **self.options)
-        #ax.clabel(ctr, fmt = '%1.0f')
+        # ax.clabel(ctr, fmt = '%1.0f')
 
         # Draw short line at right angles to line segments to indicate
         # dry side of contour
@@ -100,15 +101,15 @@ class MoistureDepth(SynopticComponent):
 
         # Formatting options
         self.options = {
-            'linewidths': [ self.lw ],
-            'linestyles': [ 'solid' ],
+            'linewidths': [self.lw],
+            'linestyles': ['solid'],
         }
 
         # Colour map settings
         self.cm_name = 'BuGn'
-        self.cm_thres = [ 2000, None ]
+        self.cm_thres = [2000, None]
         self.cm_alpha = None
-        self.cm_range = [ 0, 0.9 ]
+        self.cm_range = [0, 0.9]
 
     def plot(self, ax):
 
@@ -141,9 +142,10 @@ class MoistureDepth(SynopticComponent):
         # NB Correction to Alex's version: use temperature in Celsius
         # in denominator of SVP term
 
-        svp = (6.11*10.0**((7.5*temp_850_C.data)/(237.3+temp_850_C.data)))*100.0
+        svp = (6.11*10.0**((7.5*temp_850_C.data)/(237.3+temp_850_C.data)))*100
 
-        # SVD = SVP / (R * T)  # R is gas constant for 1kg water vapour, T is temperature in Kelvin
+        # SVD = SVP / (R * T) # R is gas constant for 1kg water
+        # vapour, T is temperature in Kelvin
         svd = svp/(461.5*temp_850.data)
 
         # MD = Z + PW/SVD  # Z is geopotential height (at surface?)
@@ -155,8 +157,8 @@ class MoistureDepth(SynopticComponent):
                                                         cm_range=self.cm_range)
 
         # Plot moisture depth
-        ctrf = ax.contourf(self.lon, self.lat, md.data, **self.options)
+        ax.contourf(self.lon, self.lat, md.data, **self.options)
 
         ctr = ax.contour(self.lon, self.lat, md.data,
                          **self.options)
-        ax.clabel(ctr, fmt = '%1.0f')
+        ax.clabel(ctr, fmt='%1.0f')

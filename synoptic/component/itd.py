@@ -9,6 +9,7 @@ from wrf import smooth2d as wrf_smooth2d
 import gfs_utils
 from .component import SynopticComponent
 
+
 class ITD(SynopticComponent):
     """
     Inter-tropical discontinuity (ITD), based on 15 deg C dewpoint
@@ -27,7 +28,7 @@ class ITD(SynopticComponent):
 
         # Tolerance for gradient-based masking
         self.tol = 0.2
-        self.dewpoint_level = [ 15.0 ]
+        self.dewpoint_level = [15.0]
 
         # Minimum number of vertices to include when plotting ITD contours
         self.min_vertices = 10
@@ -52,15 +53,16 @@ class ITD(SynopticComponent):
             self.data.data = wrf_smooth2d(self.data.data, self.smooth_pass)
 
         # Calculate gradient of dewpoint temp with latitude
-        gradient_dpt_wrt_lat = iris.analysis.calculus.differentiate(self.data, 'latitude')
+        gradient_dpt_wrt_lat = iris.analysis.calculus.differentiate(self.data,
+                                                                    'latitude')
 
         # Regrid dewpoint temperature to match gradient data
-        dpt_2m_regridded = self.data.regrid(gradient_dpt_wrt_lat,
-                                            iris.analysis.Linear(extrapolation_mode='extrapolate'))
+        mode = iris.analysis.Linear(extrapolation_mode='extrapolate')
+        dpt_2m_regridded = self.data.regrid(gradient_dpt_wrt_lat, mode)
 
         # Mask dpt_2m_regridded if gradient exceeds tolerance
-        dpt_2m_masked = iris.util.mask_cube(dpt_2m_regridded,
-                                            gradient_dpt_wrt_lat.data > self.tol)
+        grad_mask = gradient_dpt_wrt_lat.data > self.tol
+        dpt_2m_masked = iris.util.mask_cube(dpt_2m_regridded, grad_mask)
 
         # Adjust self.lat to account for regridding
         self.lat = dpt_2m_masked.coord('latitude').points
@@ -68,13 +70,13 @@ class ITD(SynopticComponent):
         # Create an additional mask based on geopotential height
         # difference
         geo = self.chart.get_data(SynopticComponent.GFS_VARS['geo'])
-        levels = [ 700, 925 ]
+        levels = [700, 925]
         lv_coord = gfs_utils.get_level_coord(geo, 'hPa')
         cc = gfs_utils.get_coord_constraint(lv_coord.name(), levels)
         geo_data = geo.extract(cc)
 
         # Calculate 700-925hPa geopotential height difference
-        geo_diff = geo_data[0, :, :] -  geo_data[1, :, :]
+        geo_diff = geo_data[0, :, :] - geo_data[1, :, :]
 
         # Get threshold value for locating area of highest
         # geopotential height difference
@@ -101,12 +103,14 @@ class ITD(SynopticComponent):
 
         # Plot masked dewpoint temperature contour (ITD)
         itd1 = ax.contour(self.lon, self.lat, dp_masked,
-                          levels = self.dewpoint_level,
-                          colors = self.col, linewidths = 3*self.lw)
+                          levels=self.dewpoint_level,
+                          colors=self.col,
+                          linewidths=3*self.lw)
         itd2 = ax.contour(self.lon, self.lat, dp_masked,
-                          levels = self.dewpoint_level,
-                          colors = self.col2, linewidths = self.lw,
-                          linestyles = 'dashed')
+                          levels=self.dewpoint_level,
+                          colors=self.col2,
+                          linewidths=self.lw,
+                          linestyles='dashed')
 
         # Clean up contours
         self.clean_contour(itd1)
@@ -116,7 +120,8 @@ class ITD(SynopticComponent):
         """Clean up contour by getting rid of short paths"""
         for lc in ctr.collections:
             paths = lc.get_paths()
-            new_paths = [path for path in paths if len(path.vertices) >= self.min_vertices]
+            new_paths = [path for path in paths
+                         if len(path.vertices) >= self.min_vertices]
             del paths[:]
 
             # set lc._paths directly because lc.set_paths() is buggy

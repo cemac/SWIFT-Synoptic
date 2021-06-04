@@ -5,6 +5,7 @@ import numpy as np
 
 from .component import SynopticComponent
 
+
 class MeanSeaLevelPressure(SynopticComponent):
     """
     Mean sea level pressure.
@@ -58,7 +59,7 @@ class MeanSeaLevelPressure(SynopticComponent):
                          **self.options)
 
         if self.label_contours:
-            ax.clabel(ctr, fmt = '%1.0f')
+            ax.clabel(ctr, fmt='%1.0f')
 
 class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
     """
@@ -75,7 +76,8 @@ class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
         # Inspect MSLP change over past 24 hours
         self.delta = -24
 
-        # Plot lines at 0.5 hPa intervals, skip contours in [-0.5, 0.5] interval
+        # Plot lines at 0.5 hPa intervals, skip contours in [-0.5, 0.5]
+        # interval
         self.step = 0.5
         self.thres = 0.5
 
@@ -87,10 +89,12 @@ class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
     def plot(self, ax):
 
         try:
+            td = dt.timedelta(hours=self.delta)
             mslp_m24 = self.chart.get_data(self.gfs_vars, units=self.units,
-                                           delta=dt.timedelta(hours=self.delta))
+                                           delta=td)
         except ValueError:
-            msg = "{:d} hour data not available, cannot plot mean sea level pressure change".format(self.delta)
+            msg = """{:d} hour data not available, cannot plot mean sea level
+            pressure change""".format(self.delta)
             warnings.warn(msg)
             return
 
@@ -108,4 +112,4 @@ class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
                          levels=levels,
                          linestyles=linestyles,
                          **self.options)
-        ax.clabel(ctr, fmt = '%1.1f')
+        ax.clabel(ctr, fmt='%1.1f')

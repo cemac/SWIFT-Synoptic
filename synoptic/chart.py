@@ -37,7 +37,6 @@ import os
 import sys
 import datetime as dt
 import argparse
-import math
 import warnings
 
 import matplotlib as mpl
@@ -49,10 +48,12 @@ import cartopy.crs as ccrs
 import iris
 import numpy as np
 
-#from * import gfs_utils  # works for tests but not when calling module code
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+# from * import gfs_utils  # works for tests but not when calling module code
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                '.')))
 import gfs_utils  # works when calling module code
 from component import *
+
 
 class SynopticChart:
     """
@@ -87,7 +88,7 @@ class SynopticChart:
         # Options for plotting backend
         self.mpl_options = {
             'figsize': None,
-            'subplot_kw': { 'projection': ccrs.PlateCarree() },
+            'subplot_kw': {'projection': ccrs.PlateCarree()},
         }
 
     def __str__(self):
@@ -101,7 +102,8 @@ class SynopticChart:
         )
 
     def get_date_str(self):
-        return dt.datetime.strptime(self.fct_timestamp, '%Y%m%d%H').strftime("%Y%m%d %H:%M")
+        return dt.datetime.strptime(self.fct_timestamp,
+                                    '%Y%m%d%H').strftime("%Y%m%d %H:%M")
 
     def set_domain(self, arg):
         arg_type = type(arg)
@@ -125,13 +127,15 @@ class SynopticChart:
             if len(arg) == 4:
                 self.domain = tuple(arg)
             else:
-                raise ValueError("Domain does not contain the right number of values")
+                raise ValueError("Domain does not contain the right number "
+                                 "of values")
         else:
             raise ValueError("Unrecognised domain type")
 
     def set_timestamp(self, arg):
         try:
-            if arg != dt.datetime.strptime(arg, '%Y%m%d%H').strftime('%Y%m%d%H'):
+            if arg != (dt.datetime.strptime(arg, '%Y%m%d%H')
+                       .strftime('%Y%m%d%H')):
                 raise ValueError('Unexpected timestamp format')
         except ValueError as e:
             raise(e)
@@ -153,12 +157,12 @@ class SynopticChart:
 
     def get_file_path(self, timestamp):
         ts = dt.datetime.strptime(timestamp, '%Y%m%d%H')
-        if self.fct_hour > 0:
-            file_path = os.path.join(self.data_dir, "GFS_NWP", timestamp,
-                                     'GFS_forecast_{:%Y%m%d_%H}.nc'.format(ts))
-        else:
-            file_path = os.path.join(self.data_dir, "GFS_NWP", timestamp,
-                                     'analysis_gfs_4_{:%Y%m%d_%H}00_000.nc'.format(ts))
+        prefix, suffix = (('GFS_forecast_', '.nc')
+                          if (self.fct_hour > 0)
+                          else ('analysis_gfs_4_', '00_000.nc'))
+        file_name = '{}{:%Y%m%d_%H}{}'.format(prefix, ts, suffix)
+        file_path = os.path.join(self.data_dir, "GFS_NWP",
+                                 timestamp, file_name)
         if not os.path.isfile(file_path):
             raise ValueError("{:s} is not a file", file_path)
         return file_path
@@ -183,15 +187,17 @@ class SynopticChart:
         rtn = iris.cube.CubeList()
         for c in cubes:
             # Rewrap longitude
-            c = c.intersection(longitude = (-180, 180))
+            c = c.intersection(longitude=(-180, 180))
 
             if units is not None:
                 # Convert units
                 c.convert_units(units)
 
             # Constrain to specified forecast hour for this chart
-            fct_date = dt.datetime.strptime(c.attributes['initial_time'], '%m/%d/%Y (%H:%M)')
-            time_constraint = gfs_utils.get_time_constraint(fct_date, self.fct_hour)
+            fct_date = dt.datetime.strptime(c.attributes['initial_time'],
+                                            '%m/%d/%Y (%H:%M)')
+            time_constraint = gfs_utils.get_time_constraint(fct_date,
+                                                            self.fct_hour)
             c = c.extract(time_constraint)
 
             if apply_domain:
@@ -206,7 +212,7 @@ class SynopticChart:
     def add_component(self, component):
         self.components.append(component)
 
-    def build(self, dir_path = None, scale_factor = 10):
+    def build(self, dir_path=None, scale_factor=10):
         """Build chart from components"""
         if dir_path is not None:
             # Use non-interactive backend
@@ -218,7 +224,8 @@ class SynopticChart:
                 sample_data = sample_data[0]
             # Set sensible size in inches based on coordinate array extent
             coords = ('longitude', 'latitude')
-            shape = np.array([sample_data.coord(x).points.size for x in coords])
+            shape = np.array([sample_data.coord(x).points.size
+                              for x in coords])
             self.mpl_options['figsize'] = shape/scale_factor
 
         # set up chart - this might be configurable to use different
@@ -231,7 +238,9 @@ class SynopticChart:
             c.plot(ax)
 
         if dir_path is not None:
-            file_name = '{:%Y%m%d_%H%M}_{:03d}_{}_{}.png'.format(self.date(), self.fct_hour, self.domain_name, self.chart_type.lower())
+            file_name = ('{:%Y%m%d_%H%M}_{:03d}_{}_{}.png'
+                         .format(self.date(), self.fct_hour,
+                                 self.domain_name, self.chart_type.lower()))
             file_path = os.path.join(dir_path, file_name)
             plt.savefig(file_path)
             plt.close()
@@ -250,8 +259,9 @@ class SynopticChart:
 
         # Add gridlines
         grid_col = '#53606d'
-        grid_label_style = { 'color': grid_col }
-        gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True, zorder=1.5, color=grid_col)
+        grid_label_style = {'color': grid_col}
+        gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True,
+                          zorder=1.5, color=grid_col)
         gl.xlocator = mticker.FixedLocator(np.arange(-60, 90, 10))
         gl.ylocator = mticker.FixedLocator(np.arange(-60, 60, 10))
         gl.xlabel_style = grid_label_style
@@ -263,11 +273,12 @@ class SynopticChart:
         ax.add_feature(cfeature.BORDERS, color='gray', alpha=map_alpha)
 
         ax.add_feature(cfeature.LAND, alpha=0.5)
-        ax.add_feature(cfeature.LAKES, alpha=0.5, edgecolor = '#6e9ee1')
+        ax.add_feature(cfeature.LAKES, alpha=0.5, edgecolor='#6e9ee1')
         ax.add_feature(cfeature.OCEAN, alpha=0.5)
 
         # Add formatted date string
-        date_str = '{:%Y%m%d %H:%M} + {:d} hours'.format(self.date(), self.fct_hour)
+        date_str = '{:%Y%m%d %H:%M} + {:d} hours'.format(self.date(),
+                                                         self.fct_hour)
         ax.text(0, 0, date_str,
                 horizontalalignment='left',
                 verticalalignment='bottom',
@@ -286,6 +297,7 @@ class SynopticChart:
         ax.add_artist(text)
 
         return fig, ax
+
 
 class LowLevelChart(SynopticChart):
     """
@@ -338,7 +350,7 @@ class LowLevelChart(SynopticChart):
             self.rh_700 = MidlevelDryIntrusion(self, [700], [80])
             self.rh_700.marker_thres = 1000
             self.rh_700.options['colors'] = 'purple'
-            self.rh_700.options['linewidths'] = [ 2.0 ]
+            self.rh_700.options['linewidths'] = [2.0]
 
             # Dewpoint temperature at 2m
             self.dpt = DPT(self)
@@ -381,25 +393,38 @@ class WAJetsWaves(SynopticChart):
         self.chart_type = "WA-jets-waves"
 
         self.aej = AfricanEasterlyJet(self, 600)
+        #`self.aej.plot_ws = False
+        self.aej.ws_options['alpha'] = 0.01
+
+        # Windspeed and streamlines at 600 hPa for diagnosis of AEWs
+        # self.wc_600 = WindPressureLevel(self, 600)
+        # self.wc_600.plot_ws = False
+        # self.wc_600.strm_options['color'] = 'black'
+        # self.wc_600.strm_options['linewidth'] = 0.7
 
         # Tropical Easterly Jet
-        self.tej = TropicalEasterlyJet(self)
+        self.tej100 = TropicalEasterlyJet(self, 100)
+        self.tej200 = TropicalEasterlyJet(self, 200)
 
         # Subtropical Jet
         self.stj = SubtropicalJet(self)
 
         # African Easterly Waves
-        self.aew = AfricanEasterlyWaves(self)
+        # self.aew = AfricanEasterlyWaves(self)
 
         # Moisture depth
         self.md = MoistureDepth(self)
         self.md.cm_alpha = 0.6
 
+        #self.mt = MonsoonTrough(self)
+
+
 class ConvectiveChart(SynopticChart):
     """Chart displaying convection for West Africa.
 
     Features to be plotted:
-    * Measures of convectively favourable conditions. Consider a choice or combination of
+    * Measures of convectively favourable conditions. Consider a choice or
+    combination of
       - PW/Moisture depth.
       - CAPE or K Index
       - CIN
@@ -440,7 +465,8 @@ class ConvectiveChart(SynopticChart):
 
         # Mid level (850 hPa) vortices
 
-        # Mid-level dry intrusion - defaults to 60% contour of min(RH700, RH600, RH500)
+        # Mid-level dry intrusion - defaults to 60% contour of
+        # min(RH700, RH600, RH500)
         self.mdi = MidlevelDryIntrusion(self)
 
         # African Easterly Jet
@@ -451,6 +477,7 @@ class ConvectiveChart(SynopticChart):
         self.ws_925_650 = WindShear(self, 925, 650)
         self.ws_925_650.ws_thres = 15
         self.ws_925_650.qv_options['alpha'] = 0.3
+
 
 class SynthesisChart(SynopticChart):
     """Synthesis chart displaying key features for analysis.
@@ -482,7 +509,8 @@ class SynthesisChart(SynopticChart):
         self.wc_925.strm_options['color'] = 'black'
         self.wc_925.strm_options['linewidth'] = 0.7
 
-        # Mid-level dry intrusion - defaults to 60% contour of min(RH700, RH600, RH500)
+        # Mid-level dry intrusion - defaults to 60% contour of
+        # min(RH700, RH600, RH500)
         self.mdi = MidlevelDryIntrusion(self)
 
         # 925-650hPa wind shear
@@ -497,7 +525,9 @@ class SynthesisChart(SynopticChart):
 #---------------------------------------------------------------
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Plot synoptic chart')
+    formatter = argparse.RawDescriptionHelpFormatter
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=formatter)
 
     parser.add_argument('domain', type=str,
                         metavar='domain', choices=['WA', 'EA', 'PA'],
@@ -509,14 +539,16 @@ def parse_args():
                         \"YYYYmmddHH\"''')
 
     parser.add_argument('forecast_hour', type=int,
-                        metavar='forecast_hour', choices=range(0,73,3),
+                        metavar='forecast_hour', choices=range(0, 73, 3),
                         help='''Forecast hour as non-negative integer
                         multiple of 3 (max 72)''')
 
     parser.add_argument('chart_type', nargs='?', type=str,
-                        metavar="chart_type", choices=["low", "jets", "conv", "synth"],
+                        metavar="chart_type",
+                        choices=["low", "jets", "conv", "synth"],
                         default="low",
-                        help='''Chart type (low, jets, conv or synth) (default: low)''')
+                        help='Chart type (low, jets, conv or synth) '
+                        '(default: low)')
 
     parser.add_argument('-o', '--output-dir', nargs='?', type=str,
                         dest='output_dir', default=None,
@@ -530,7 +562,9 @@ def parse_args():
         err_msg = err_msg.format(pa.output_dir)
         raise ValueError(err_msg)
 
-    return (pa.domain, pa.timestamp, pa.forecast_hour, pa.chart_type, pa.output_dir)
+    return (pa.domain, pa.timestamp, pa.forecast_hour, pa.chart_type,
+            pa.output_dir)
+
 
 def main():
 
@@ -551,7 +585,8 @@ def main():
 
     chart.build(out_dir)
 
-    #end main()
+    # end main()
+
 
 if __name__ == '__main__':
     main()

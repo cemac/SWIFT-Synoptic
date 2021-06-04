@@ -12,11 +12,12 @@ from wrf import smooth2d as wrf_smooth2d
 import gfs_utils
 from .component import SynopticComponent
 
-#-----------------------------------------
+# -----------------------------------------
 
 # Wind components
 
-#-----------------------------------------
+# -----------------------------------------
+
 
 class WindComponent(SynopticComponent):
     """
@@ -51,7 +52,8 @@ class WindComponent(SynopticComponent):
         v = v.extract(vc)
 
         def handle_error(lvl, units):
-            err_msg = f'Could not extract wind component data for specified level: {lvl} {units}'
+            err_msg = f'''Could not extract wind component data for
+            specified level: {lvl} {units}'''
             warnings.warn(err_msg)
 
         if type(level) is list:
@@ -59,8 +61,10 @@ class WindComponent(SynopticComponent):
             V = []
             windspeed = []
             for lvl in level:
-                ui = u.extract(gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl))
-                vi = v.extract(gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl))
+                ucc = gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl)
+                vcc = gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl)
+                ui = u.extract(ucc)
+                vi = v.extract(vcc)
                 try:
                     Ui = ui.data.astype(np.float64)
                     Vi = vi.data.astype(np.float64)
@@ -81,12 +85,13 @@ class WindComponent(SynopticComponent):
 
         return (U, V, windspeed)
 
-    def set_coord_mask(self, lat_min=None, lat_max=None, lon_min=None, lon_max=None):
+    def set_coord_mask(self, lat_min=None, lat_max=None, lon_min=None,
+                       lon_max=None):
         """
         Define mask to specify relevant regions
         """
         lon_grid, lat_grid = np.meshgrid(self.lon, self.lat)
-        self.coord_mask = np.zeros_like(lat_grid, dtype = bool)
+        self.coord_mask = np.zeros_like(lat_grid, dtype=bool)
         if lat_min is not None:
             self.coord_mask |= (lat_grid < lat_min)
         if lat_max is not None:
@@ -97,8 +102,6 @@ class WindComponent(SynopticComponent):
             self.coord_mask |= (lon_grid > lon_max)
 
     def plot_jet_axis(self, ax, mask=None, plot_core=True):
-
-        patches = []
 
         U, V, windspeed = self.get_wind_components()
 
@@ -119,7 +122,8 @@ class WindComponent(SynopticComponent):
         # Select seed point(s) corresponding to maximum windspeed
         seed_index = np.unravel_index(np.argmax(ws, axis=None), ws.shape)
         seed_index = np.array(seed_index, ndmin=2)
-        seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]] for x in seed_index])
+        seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]]
+                                for x in seed_index])
 
         # Get streamline(s) through specified seed point(s)
         strm = ax.streamplot(self.lon, self.lat, U, V,
@@ -174,18 +178,19 @@ class WindComponent(SynopticComponent):
                 sp = s+n
                 sm = s-n
                 if not box.contains(sgeom.Point((sp))):
-                     line = sgeom.LineString([sp, sp + np.array([dx, dy])])
-                     sp = np.array(box.exterior.intersection(line))
+                    line = sgeom.LineString([sp, sp + np.array([dx, dy])])
+                    sp = np.array(box.exterior.intersection(line))
                 if not box.contains(sgeom.Point((sm))):
-                     line = sgeom.LineString([sm, sm + np.array([dx, dy])])
-                     sm = np.array(box.exterior.intersection(line))
+                    line = sgeom.LineString([sm, sm + np.array([dx, dy])])
+                    sm = np.array(box.exterior.intersection(line))
                 if len(sp) and len(sm):
                     verts.append([sp, sm])
                 current_point = seg[i+1]
             if current_point is not None:
                 sp = current_point+n
                 sm = current_point-n
-                if box.contains(sgeom.Point((sp))) and box.contains(sgeom.Point((sm))):
+                if (box.contains(sgeom.Point((sp))) and
+                    box.contains(sgeom.Point((sm)))):
                     verts.append([sp, sm])
 
         # Rearrange array to get vertices for parallel tramlines
@@ -201,7 +206,8 @@ class WindComponent(SynopticComponent):
             ws_masked = np.ma.masked_where(self.coord_mask, windspeed)
 
             # Use maximum of specified core threshold and specified percentile
-            ws_thres = np.percentile(ws_masked[~ws_masked.mask], self.thres_core_percentile)
+            ws_thres = np.percentile(ws_masked[~ws_masked.mask],
+                                     self.thres_core_percentile)
             ws_thres = max(self.thres_core, ws_thres)
 
             # Get contours for core threshold windspeed
@@ -225,7 +231,8 @@ class WindComponent(SynopticComponent):
                 # Use contour bounds to get dimensions for core
                 it = iter(shp.bounds)
                 bounds = np.array([[self.lon[np.rint(next(it)).astype(int)],
-                                    self.lat[np.rint(x).astype(int)]] for x in it])
+                                    self.lat[np.rint(x).astype(int)]]
+                                   for x in it])
                 dx, dy = np.abs(bounds[1] - bounds[0])
 
                 # Draw core as ellipse around centroid
@@ -254,7 +261,8 @@ class WindPressureLevel(WindComponent):
 
     def init(self):
         self.name = "Wind on Pressure Level"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
         self.units = None
         self.level_units = 'hPa'
 
@@ -266,7 +274,7 @@ class WindPressureLevel(WindComponent):
         self.thres_ws = 10
 
         self.cm_name = 'Blues'
-        self.cm_thres = [ self.thres_ws, None ]
+        self.cm_thres = [self.thres_ws, None]
 
         # Formatting options
         self.ws_options = {
@@ -276,7 +284,7 @@ class WindPressureLevel(WindComponent):
         # Set streamline density based on longitudinal and latitudinal
         # extent
         domain = np.array(self.chart.domain)
-        lon_lat = domain.reshape((2,2), order='F')[::-1]
+        lon_lat = domain.reshape((2, 2), order='F')[::-1]
         delta = np.diff(lon_lat).flatten()
 
         self.strm_options = {
@@ -293,15 +301,17 @@ class WindPressureLevel(WindComponent):
         if self.plot_ws:
             # Plot windspeed at 925 hPa
             max_ws = np.amax(windspeed)
-            self.cm_thres = [ self.thres_ws, None ]
-            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
-            ctr = ax.contourf(self.lon, self.lat, windspeed,
-                              **self.ws_options)
+            self.cm_thres = [self.thres_ws, None]
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws,
+                                                               alpha=0.4)
+            ax.contourf(self.lon, self.lat, windspeed,
+                        **self.ws_options)
 
         if self.plot_strm:
             # Plot streamlines
-            strm = ax.streamplot(self.lon, self.lat, U, V,
-                                 **self.strm_options)
+            ax.streamplot(self.lon, self.lat, U, V,
+                          **self.strm_options)
+
 
 class WindHeightLevel(WindComponent):
     """
@@ -313,14 +323,15 @@ class WindHeightLevel(WindComponent):
 
     def init(self):
         self.name = "Windspeed at Height Level"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvh', 'v_lvh')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvh', 'v_lvh')]
         self.units = None
         self.level_units = 'm'
 
         self.plot_ws = True
         self.plot_strm = False
 
-        self.ws_level = [ 15.0 ]
+        self.ws_level = [15.0]
 
         self.options = {
             'alpha': 0.6,
@@ -331,7 +342,7 @@ class WindHeightLevel(WindComponent):
         # Set streamline density based on longitudinal and latitudinal
         # extent
         domain = np.array(self.chart.domain)
-        lon_lat = domain.reshape((2,2), order='F')[::-1]
+        lon_lat = domain.reshape((2, 2), order='F')[::-1]
         delta = np.diff(lon_lat).flatten()
 
         self.strm_options = {
@@ -348,14 +359,14 @@ class WindHeightLevel(WindComponent):
 
         if self.plot_ws:
             # Plot 10m windspeed 15 m/s contour
-            ctr = ax.contour(self.lon, self.lat, windspeed,
-                             levels = self.ws_level,
-                             **self.options)
+            ax.contour(self.lon, self.lat, windspeed,
+                       levels=self.ws_level,
+                       **self.options)
 
         if self.plot_strm:
             # Plot streamlines
-            strm = ax.streamplot(self.lon, self.lat, U, V,
-                                 **self.strm_options)
+            ax.streamplot(self.lon, self.lat, U, V,
+                          **self.strm_options)
 
 
 class WindShear(WindComponent):
@@ -365,7 +376,8 @@ class WindShear(WindComponent):
 
     def init(self):
         self.name = "Wind shear"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
         self.units = None
         self.level_units = 'hPa'
 
@@ -377,13 +389,14 @@ class WindShear(WindComponent):
         self.qv_options = {
             'color': 'black',
             'alpha': 0.2,
-            'width': 0.002,  # width relative to selected units (default = axis width)
+            # width relative to selected units (default = axis width)
+            'width': 0.002,
         }
 
         self.ws_thres = 25
 
         self.cm_name = 'Oranges'
-        self.cm_thres = [ self.ws_thres, None ]
+        self.cm_thres = [self.ws_thres, None]
 
         self.ws_options = {
             'cmap': self.cm_name,
@@ -399,18 +412,20 @@ class WindShear(WindComponent):
         ws_diff = np.sqrt(U_diff**2 + V_diff**2)
 
         if self.plot_ctr:
-            self.ws_options['cmap'] = self.get_masked_colormap(val_max=np.amax(ws_diff), alpha=0.4)
-            ctr = ax.contourf(self.lon, self.lat, ws_diff,
-                              **self.ws_options)
+            cm = self.get_masked_colormap(val_max=np.amax(ws_diff), alpha=0.4)
+            self.ws_options['cmap'] = cm
+            ax.contourf(self.lon, self.lat, ws_diff,
+                        **self.ws_options)
 
         if self.plot_qv:
             # Mask values below threshold
             U_diff = np.ma.masked_where(ws_diff < self.ws_thres, U_diff)
             V_diff = np.ma.masked_where(ws_diff < self.ws_thres, V_diff)
-            qv = ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
-                           U_diff[::self.qv_skip, ::self.qv_skip],
-                           V_diff[::self.qv_skip, ::self.qv_skip],
-                           **self.qv_options)
+            ax.quiver(self.lon[::self.qv_skip], self.lat[::self.qv_skip],
+                      U_diff[::self.qv_skip, ::self.qv_skip],
+                      V_diff[::self.qv_skip, ::self.qv_skip],
+                      **self.qv_options)
+
 
 class AfricanEasterlyJet(WindComponent):
     """
@@ -423,7 +438,8 @@ class AfricanEasterlyJet(WindComponent):
 
     def init(self):
         self.name = "African Easterly Jet"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
         self.units = None
         self.level_units = 'hPa'
 
@@ -438,7 +454,7 @@ class AfricanEasterlyJet(WindComponent):
         self.thres_windshear = 15
 
         self.cm_name = 'Greens'
-        self.cm_thres = [ self.thres_axis, None ]
+        self.cm_thres = [self.thres_axis, None]
 
         # Formatting options
         self.ws_options = {
@@ -484,9 +500,10 @@ class AfricanEasterlyJet(WindComponent):
         if self.plot_ws:
             # Plot windspeed contours
             max_ws = np.amax(windspeed)
-            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
-            ctr = ax.contourf(self.lon, self.lat, windspeed,
-                              **self.ws_options)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws,
+                                                               alpha=0.4)
+            ax.contourf(self.lon, self.lat, windspeed,
+                        **self.ws_options)
 
         if self.plot_core:
             # Mask windspeed to relevant region i.e. between 10-15 deg N
@@ -496,7 +513,8 @@ class AfricanEasterlyJet(WindComponent):
             ws_masked[mask] = np.nan
 
             # Get contours for core threshold windspeed
-            ctr_list = skimage.measure.find_contours(ws_masked, level=self.thres_core)
+            ctr_list = skimage.measure.find_contours(ws_masked,
+                                                     level=self.thres_core)
             for c in ctr_list:
                 shp = sgeom.Polygon(c)
 
@@ -508,7 +526,8 @@ class AfricanEasterlyJet(WindComponent):
                 # Use contour bounds to get dimensions for core
                 it = iter(shp.bounds)
                 bounds = np.array([[self.lon[np.rint(next(it)).astype(int)],
-                                    self.lat[np.rint(x).astype(int)]] for x in it])
+                                    self.lat[np.rint(x).astype(int)]]
+                                   for x in it])
                 dx, dy = np.abs(bounds[1] - bounds[0])
 
                 # Draw core as ellipse around centroid
@@ -538,7 +557,8 @@ class AfricanEasterlyJet(WindComponent):
 
             # select seed points
             seed_index = np.argwhere(ws_masked > max_ws*0.85)
-            seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]] for x in seed_index])
+            seed_points = np.array([[self.lon[x[1]], self.lat[x[0]]]
+                                    for x in seed_index])
 
             # Define mask for jet axis
             mask1 = (ws_masked < self.thres_axis)
@@ -595,11 +615,13 @@ class AfricanEasterlyJet(WindComponent):
                         ax.add_patch(p)
                     current_point = seg[i+1]
 
+
 class TropicalEasterlyJet(WindComponent):
     """
     Tropical Easterly Jet
 
-    Two cores above 35 kt, at 100 and 200 hPa, around 15°N and 8°N respectively.
+    Two cores above 35 kt, at 100 and 200 hPa, around 15°N and 8°N
+    respectively.
 
     """
 
@@ -608,7 +630,8 @@ class TropicalEasterlyJet(WindComponent):
 
     def init(self):
         self.name = "Tropical Easterly Jet"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
         self.units = None
         self.level_units = 'hPa'
 
@@ -616,21 +639,21 @@ class TropicalEasterlyJet(WindComponent):
         self.plot_core = True
         self.plot_jet = True
 
-        self.thres_axis = 18 # FCHB: 35 kt = 18 m/s
-        self.thres_core = 25 # FCHB: 40-50 kt = 20-25 m/s
-        self.thres_core_percentile = 95 # Eniola @ NiMET says no set
-                                        # threshold for core
+        self.thres_axis = 18  # FCHB: 35 kt = 18 m/s
+        self.thres_core = 25  # FCHB: 40-50 kt = 20-25 m/s
+        # Eniola @ NiMET says there is no set threshold for core
+        self.thres_core_percentile = 95
 
         # Formatting options
         self.lw = 2.0
         # TODO select preferred colour
-        # self.color = '#b34c2e' # Colour value derived from FCHB - Table 11.1
-        # self.color = '#c3704b' # Colour value derived from FCHB - section 11.7
-        # self.color = '#b99356' # Colour value derived from FCHB - Figure 11.1
-        self.color = '#be933a' # Colour value derived from FCHB - Figure 11.2
+        # self.color = '#b34c2e'  # Colour value from FCHB - Table 11.1
+        # self.color = '#c3704b'  # Colour value from FCHB - section 11.7
+        # self.color = '#b99356'  # Colour value from FCHB - Figure 11.1
+        self.color = '#be933a'  # Colour value from FCHB - Figure 11.2
 
         self.cm_name = 'Oranges'
-        self.cm_thres = [ self.thres_axis, None ]
+        self.cm_thres = [self.thres_axis, None]
 
         self.ws_options = {
             'cmap': self.cm_name,
@@ -681,15 +704,17 @@ class TropicalEasterlyJet(WindComponent):
         if self.plot_ws:
             # Plot windspeed contours
             max_ws = np.amax(windspeed)
-            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
-            ctr = ax.contourf(self.lon, self.lat, windspeed,
-                              **self.ws_options)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws,
+                                                               alpha=0.4)
+            ax.contourf(self.lon, self.lat, windspeed,
+                        **self.ws_options)
 
         if self.plot_jet:
             # Define mask for jet axis
             mask = self.coord_mask | ws_mask
 
             self.plot_jet_axis(ax, mask, self.plot_core)
+
 
 class SubtropicalJet(WindComponent):
     """
@@ -711,7 +736,8 @@ class SubtropicalJet(WindComponent):
 
     def init(self):
         self.name = "Sub Tropical Jet"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
         self.units = None
         self.level_units = 'hPa'
 
@@ -721,19 +747,20 @@ class SubtropicalJet(WindComponent):
 
         month = self.chart.date().month
 
-        # FIXME: which months to use for winter and what about outside monsoon + winter?
-        self.thres_axis = 23.15 # FCHB: 45 kt = 23.15 m/s (during monsoon)
+        # FIXME: which months to use for winter and what about outside
+        # monsoon + winter?
+        self.thres_axis = 23.15  # FCHB: 45 kt = 23.15 m/s (during monsoon)
         if month >= 10 or month <= 2:
-            self.thres_axis = 30.87 # FCHB: 60 kt = 30.87 m/s (during winter)
+            self.thres_axis = 30.87  # FCHB: 60 kt = 30.87 m/s (during winter)
         self.thres_core = 25
         self.thres_core_percentile = 95
 
         # Formatting options
         self.lw = 2.0
-        self.color = '#be933a' # Colour value derived from FCHB - Figure 11.2
+        self.color = '#be933a'  # Colour value derived from FCHB - Figure 11.2
 
         self.cm_name = 'Oranges'
-        self.cm_thres = [ self.thres_axis, None ]
+        self.cm_thres = [self.thres_axis, None]
 
         self.ws_options = {
             'cmap': self.cm_name,
@@ -782,9 +809,10 @@ class SubtropicalJet(WindComponent):
         if self.plot_ws:
             # Plot windspeed contours
             max_ws = np.amax(windspeed)
-            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws, alpha=0.4)
-            ctr = ax.contourf(self.lon, self.lat, windspeed,
-                              **self.ws_options)
+            self.ws_options['cmap'] = self.get_masked_colormap(val_max=max_ws,
+                                                               alpha=0.4)
+            ax.contourf(self.lon, self.lat, windspeed,
+                        **self.ws_options)
 
         if self.plot_jet:
             # Define mask for jet axis
@@ -804,7 +832,8 @@ class AfricanEasterlyWaves(WindComponent):
 
     def init(self):
         self.name = "African Easterly Waves"
-        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x) for x in ('u_lvp', 'v_lvp')]
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
         self.units = None
         self.level_units = 'hPa'
 
