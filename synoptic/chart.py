@@ -410,7 +410,7 @@ class WAJetsWaves(SynopticChart):
         self.stj = SubtropicalJet(self)
 
         # African Easterly Waves
-        # self.aew = AfricanEasterlyWaves(self)
+        self.aew = AfricanEasterlyWaves(self)
 
         # Moisture depth
         self.md = MoistureDepth(self)

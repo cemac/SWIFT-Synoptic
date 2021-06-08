@@ -8,6 +8,7 @@ import matplotlib.patches as mpatches
 from matplotlib.path import Path
 from windspharm.iris import VectorWind
 from wrf import smooth2d as wrf_smooth2d
+from scipy.ndimage import label
 
 import gfs_utils
 from .component import SynopticComponent
@@ -837,6 +838,8 @@ class AfricanEasterlyWaves(WindComponent):
         self.units = None
         self.level_units = 'hPa'
 
+        self.mask_min_size = 12  # need to relate to grid size
+
         self.options = {
             'linewidths': 3.0,
             'colors': 'black',
@@ -858,29 +861,18 @@ class AfricanEasterlyWaves(WindComponent):
         vgc = gfs_utils.get_coord_constraint(vg_lv_coord.name(), self.level)
         vg = vg.extract(vgc)
 
+        # Apply smoothing
+        ug_data = wrf_smooth2d(ug.data, 6)
+        ug.data = ug_data.data
+        vg_data = wrf_smooth2d(vg.data, 6)
+        vg.data = vg_data.data
+
         # Set up windspharm wind vector object
         w = VectorWind(ug, vg)
 
-        # Nondivergent component of wind
+        # Get nondivergent component of wind
         upsi, vpsi = w.nondivergentcomponent()
         Vpsi = VectorWind(upsi, vpsi)
-
-        # Compute streamfunction and relative vorticity
-        psi = Vpsi.streamfunction()
-        xi = Vpsi.vorticity()
-
-        # Apply domain constraint
-        domain_constraint = gfs_utils.get_domain_constraint(self.chart.domain)
-        upsi = upsi.extract(domain_constraint)
-        vpsi = vpsi.extract(domain_constraint)
-        psi = psi.extract(domain_constraint)
-        xi = xi.extract(domain_constraint)
-
-        # Get gridpoints/spacing for calculation of partial derivatives
-        lats = upsi.coord('latitude').points
-        lons = upsi.coord('longitude').points
-        ddeg = abs(lats[1] - lats[0])
-        drad = np.pi * ddeg / 180.
 
         # Partition streamfunction vorticity into curvature and shear
         # components
@@ -889,54 +881,67 @@ class AfricanEasterlyWaves(WindComponent):
         # Relative curvature vorticity:
         # V dalpha/ds = 1/V^2[u^2 dv/dx - v^2 du/dy - uv(du/dx - dv/dy)]
 
-        # Calculate gradients (should this be with respect to
-        # underlying coordinates in degrees or radians?)
-        u = upsi.data
-        v = vpsi.data
-        dudy, dudx = np.gradient(u, lats, lons)
-        dvdy, dvdx = np.gradient(v, lats, lons)
-        V = np.sqrt(u**2 + v**2)
+        dupsi_dx, dupsi_dy = Vpsi.gradient(upsi)
+        dvpsi_dx, dvpsi_dy = Vpsi.gradient(vpsi)
+        ws = Vpsi.magnitude()
 
-        xi_curv = (1/V**2) * (u**2 * dvdx - v**2 * dudy - u*v*(dudx - dvdy))
+        vrt = (upsi**2 * dvpsi_dx - vpsi**2 * dupsi_dy -
+               upsi*vpsi*(dupsi_dx - dvpsi_dy))/ws**2
 
-        # Apply smoothing to vorticity, for some reason have to swap
-        # axes back afterwards
-        xi_data = wrf_smooth2d(xi_curv, 4)
-        xi_data = np.swapaxes(xi_data, 0, 1)
+        # Calculate advection of non-divergent curvature vorticity
+        dvrt_dx, dvrt_dy = Vpsi.gradient(vrt)
+        advec = -1*(upsi * dvrt_dx + vpsi * dvrt_dy)
 
-        # Calculate gradients (should this be with respect to
-        # underlying coordinates in degrees or radians?)
-        dxidlat, dxidlon = np.gradient(xi_data, lats, lons)
+        # Second order advection term needed for masking
+        dadv_dx, dadv_dy = Vpsi.gradient(advec)
+        advec2 = upsi * dadv_dx + vpsi * dadv_dy
 
-        # Advection of streamfunction vorticity by non-divergent wind
-        # = -(Vpsi . del_h xi)
-        advec = -(upsi.data * dxidlon + vpsi.data * dxidlat)
+        # Apply domain constraint
+        domain_constraint = gfs_utils.get_domain_constraint(self.chart.domain)
+        upsi = upsi.extract(domain_constraint)
+        vrt = vrt.extract(domain_constraint)
+        advec = advec.extract(domain_constraint)
+        advec2 = advec2.extract(domain_constraint)
 
-        # Masking rules from Berry & Thorncroft 2007
+        # Masking rules from Berry & Thorncroft 2007, Table 1
 
         # A1. Mask streamfunction curvature vorticity to exclude AEW
-        # ridges axes or weak systems
-        K1T = 0.5 * 10**-5  # s^-1
-        m1 = xi_data < K1T
-        m1r = xi_data > -K1T
+        # ridges axes or weak systems (BT2007: K1T = 0.5 * 10^-5 s^-1)
+        K1T = 1.5 * 10**-5  # s^-1
+        m1t = vrt.data <= K1T  # mask for troughs
+        m1r = vrt.data >= -K1T  # mask for ridges
 
         # A2. Remove "pseudoridge" axes in nondivergent flow that is
         # highly cyclonically curved
         K2T = 0  # m s^-3
-        dadlat, dadlon = np.gradient(advec, lats, lons)
-        m2 = (upsi.data * dadlon + vpsi.data * dadlat) < K2T
+        m2 = advec2.data <= K2T
 
         # A3. Removes trough axes in westerly flow
         K3T = 0  # m s^-1
-        m3 = upsi.data > K3T
+        m3 = upsi.data >= K3T
 
-        trough_mask = m1 | m2 | m3
-        troughs = np.ma.masked_where(trough_mask, advec)
-
+        trough_mask = m1t | m2 | m3
         ridge_mask = m1r | ~m2 | m3
-        ridges = np.ma.masked_where(ridge_mask, advec)
 
-        ax.contour(self.lon, self.lat, troughs, levels = 0, **self.options)
-        ax.contour(self.lon, self.lat, ridges, levels = 0, **self.options,
+        troughs = self.apply_size_mask(trough_mask, advec.data)
+        ridges = self.apply_size_mask(ridge_mask, advec.data)
+
+        # Plot troughs and ridges
+        ax.contour(self.lon, self.lat, troughs, levels=0, **self.options)
+        ax.contour(self.lon, self.lat, ridges, levels=0, **self.options,
                    linestyles="dotted")
 
+    def apply_size_mask(self, mask, data):
+
+        # Convert mask to integer for subsequent labelling
+        m = (~mask).astype(int)
+        m_label, m_label_count = label(m)
+        # loop through labels
+        for j in np.arange(0, m_label_count + 1):
+            # get the indices for this label
+            m_iy, m_ix = np.where(m_label == j)
+            # if less than specified number of cells in latitudinal
+            # direction, mask this area
+            if (m_iy.ptp() < (self.mask_min_size - 1)):
+                mask[m_iy, m_ix] = True
+        return np.ma.masked_where(mask, data)
