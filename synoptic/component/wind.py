@@ -270,6 +270,8 @@ class WindPressureLevel(WindComponent):
         self.plot_ws = True
         self.plot_strm = True
 
+        self.density = 2.4
+
         self.min_ws = 0
         self.max_ws = 50
         self.thres_ws = 10
@@ -289,9 +291,9 @@ class WindPressureLevel(WindComponent):
         delta = np.diff(lon_lat).flatten()
 
         self.strm_options = {
-            'density': tuple(delta*0.04),
-            'linewidth': 0.4,
-            'arrowsize': 0.9,
+            'density': tuple(delta*self.density/delta[0]),
+            'linewidth': 0.8,
+            'arrowsize': 1.2,
             'arrowstyle': '->',
         }
 
