@@ -260,10 +260,11 @@ class SynopticChart:
         # Add gridlines
         grid_col = '#53606d'
         grid_label_style = {'color': grid_col}
+        grid_step = 20 if self.domain_name == 'PA' else 10
         gl = ax.gridlines(draw_labels=True, x_inline=True, y_inline=True,
                           zorder=1.5, color=grid_col)
-        gl.xlocator = mticker.FixedLocator(np.arange(-60, 90, 10))
-        gl.ylocator = mticker.FixedLocator(np.arange(-60, 60, 10))
+        gl.xlocator = mticker.FixedLocator(np.arange(-60, 90, grid_step))
+        gl.ylocator = mticker.FixedLocator(np.arange(-60, 60, grid_step))
         gl.xlabel_style = grid_label_style
         gl.ylabel_style = grid_label_style
 
