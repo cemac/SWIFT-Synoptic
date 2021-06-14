@@ -332,6 +332,8 @@ class WindHeightLevel(WindComponent):
         self.plot_ws = True
         self.plot_strm = False
 
+        self.density = 2.4
+
         self.ws_level = [15.0]
 
         self.options = {
@@ -342,14 +344,12 @@ class WindHeightLevel(WindComponent):
 
         # Set streamline density based on longitudinal and latitudinal
         # extent
-        domain = np.array(self.chart.domain)
-        lon_lat = domain.reshape((2, 2), order='F')[::-1]
-        delta = np.diff(lon_lat).flatten()
+        delta = self.chart.get_domain_extent()
 
         self.strm_options = {
-            'density': tuple(delta*0.04),
-            'linewidth': 0.4,
-            'arrowsize': 0.9,
+            'density': tuple(delta*self.density/delta[0]),
+            'linewidth': 0.8,
+            'arrowsize': 1.2,
             'arrowstyle': '->',
         }
 
