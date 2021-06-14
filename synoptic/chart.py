@@ -132,6 +132,14 @@ class SynopticChart:
         else:
             raise ValueError("Unrecognised domain type")
 
+    def get_domain_extent(self):
+        """
+        Get longitudinal and latitudinal extent of this chart's domain
+        """
+        domain = np.array(self.domain)
+        lon_lat = domain.reshape((2, 2), order='F')[::-1]
+        return np.diff(lon_lat).flatten()
+
     def set_timestamp(self, arg):
         try:
             if arg != (dt.datetime.strptime(arg, '%Y%m%d%H')
@@ -217,6 +225,9 @@ class SynopticChart:
         if dir_path is not None:
             # Use non-interactive backend
             mpl.use('agg')
+            # Adjust output scaling according to domain extent
+            _, dlat = self.get_domain_extent()
+            scale_factor = scale_factor*dlat/40
 
         if self.components:
             sample_data = self.components[0].data
