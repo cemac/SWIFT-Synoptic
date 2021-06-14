@@ -286,9 +286,7 @@ class WindPressureLevel(WindComponent):
 
         # Set streamline density based on longitudinal and latitudinal
         # extent
-        domain = np.array(self.chart.domain)
-        lon_lat = domain.reshape((2, 2), order='F')[::-1]
-        delta = np.diff(lon_lat).flatten()
+        delta = self.chart.get_domain_extent()
 
         self.strm_options = {
             'density': tuple(delta*self.density/delta[0]),
