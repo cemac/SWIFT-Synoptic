@@ -361,11 +361,12 @@ class LowLevelChart(SynopticChart):
         elif self.domain_name == 'PA':
             # Mean sea level pressure
             self.mslp = MeanSeaLevelPressure(self)
+            self.mslp.lw = 1.0
+            self.mslp.label_size = 12
 
-            # Plot MSLP at 1020, 1024, 1028 and 1032 hPa
-            self.mslp.pmin = 1020
-            self.mslp.pmax = 1032
-            self.mslp.step = 4
+            # Plot MSLP at specified levels
+            self.mslp.levels = [960, 980, 990, 1000, 1004, 1008, 1012,
+                                1016, 1020, 1024, 1028, 1032, 1036, 1040]
             self.mslp.highlight = 1020
 
             # Windspeed and streamlines at 925 hPa

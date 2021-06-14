@@ -23,6 +23,8 @@ class MeanSeaLevelPressure(SynopticComponent):
         self.step = 5
         self.highlight = 1015
         self.label_contours = True
+        self.label_size = 10
+        self.lw = 0.8
 
         # Formatting options
         self.options = {
@@ -35,22 +37,27 @@ class MeanSeaLevelPressure(SynopticComponent):
         # Data to plot
         mslp = self.data.data
 
-        pmin = np.amin(mslp)
         try:
-            pmin = max(pmin, self.pmin)
+            levels = self.levels
         except AttributeError:
-            pass
+            pmin = np.amin(mslp)
+            try:
+                pmin = max(pmin, self.pmin)
+            except AttributeError:
+                pass
 
-        pmax = np.amax(mslp)
-        try:
-            pmax = min(pmax, self.pmax)
-        except AttributeError:
-            pass
+            pmax = np.amax(mslp)
+            try:
+                pmax = min(pmax, self.pmax)
+            except AttributeError:
+                pass
 
-        levels = np.arange(pmin - pmin % self.step,
-                           pmax + self.step - pmax % self.step,
-                           self.step)
-        lw = np.array([1.6 if x == self.highlight else 0.8 for x in levels])
+            levels = np.arange(pmin - pmin % self.step,
+                               pmax + self.step - pmax % self.step,
+                               self.step)
+
+        lw = np.array([2.0*self.lw if x == self.highlight else
+                       1.0*self.lw for x in levels])
 
         # Plot mean sea level pressure contours
         ctr = ax.contour(self.lon, self.lat, mslp,
@@ -59,7 +66,8 @@ class MeanSeaLevelPressure(SynopticComponent):
                          **self.options)
 
         if self.label_contours:
-            ax.clabel(ctr, fmt='%1.0f')
+            ax.clabel(ctr, fmt='%1.0f', fontsize=self.label_size)
+
 
 class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
     """
