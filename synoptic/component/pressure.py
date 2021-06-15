@@ -91,7 +91,7 @@ class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
 
         # Formatting options
         self.options = {
-            'colors': 'orange',
+            'colors': '#d49048',
         }
 
     def plot(self, ax):
