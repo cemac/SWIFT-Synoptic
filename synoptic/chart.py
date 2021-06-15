@@ -282,7 +282,7 @@ class SynopticChart:
         # Add coastlines and borders
         map_alpha = 0.9
         ax.coastlines(color='black', alpha=map_alpha)
-        ax.add_feature(cfeature.BORDERS, color='gray', alpha=map_alpha)
+        ax.add_feature(cfeature.BORDERS, color='#333333', alpha=map_alpha)
 
         ax.add_feature(cfeature.LAND, alpha=0.5)
         ax.add_feature(cfeature.LAKES, alpha=0.5, edgecolor='#6e9ee1')
