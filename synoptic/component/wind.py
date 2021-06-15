@@ -270,7 +270,7 @@ class WindPressureLevel(WindComponent):
         self.plot_ws = True
         self.plot_strm = True
 
-        self.density = 2.4
+        self.density = 1.2 if self.chart.domain_name == 'EA' else 2.4
 
         self.min_ws = 0
         self.max_ws = 50
@@ -284,12 +284,7 @@ class WindPressureLevel(WindComponent):
             'cmap': self.cm_name,
         }
 
-        # Set streamline density based on longitudinal and latitudinal
-        # extent
-        delta = self.chart.get_domain_extent()
-
         self.strm_options = {
-            'density': tuple(delta*self.density/delta[0]),
             'linewidth': 0.8,
             'arrowsize': 1.2,
             'arrowstyle': '->',
@@ -309,6 +304,11 @@ class WindPressureLevel(WindComponent):
                         **self.ws_options)
 
         if self.plot_strm:
+            # Set streamline density based on longitudinal and
+            # latitudinal extent
+            delta = self.chart.get_domain_extent()
+            self.strm_options['density'] = tuple(delta*self.density/delta[0])
+
             # Plot streamlines
             ax.streamplot(self.lon, self.lat, U, V,
                           **self.strm_options)
@@ -332,7 +332,7 @@ class WindHeightLevel(WindComponent):
         self.plot_ws = True
         self.plot_strm = False
 
-        self.density = 2.4
+        self.density = 1.2 if self.chart.domain_name == 'EA' else 2.4
 
         self.ws_level = [15.0]
 
@@ -342,12 +342,7 @@ class WindHeightLevel(WindComponent):
             'colors': 'darkgreen',
         }
 
-        # Set streamline density based on longitudinal and latitudinal
-        # extent
-        delta = self.chart.get_domain_extent()
-
         self.strm_options = {
-            'density': tuple(delta*self.density/delta[0]),
             'linewidth': 0.8,
             'arrowsize': 1.2,
             'arrowstyle': '->',
@@ -365,6 +360,12 @@ class WindHeightLevel(WindComponent):
                        **self.options)
 
         if self.plot_strm:
+
+            # Set streamline density based on longitudinal and
+            # latitudinal extent
+            delta = self.chart.get_domain_extent()
+            self.strm_options['density'] = tuple(delta*self.density/delta[0])
+
             # Plot streamlines
             ax.streamplot(self.lon, self.lat, U, V,
                           **self.strm_options)
