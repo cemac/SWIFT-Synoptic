@@ -73,7 +73,7 @@ class SynopticChart:
     # lat_max, lon_max).
     DOMAINS = {
         'WA': (0.0, -25.0, 40.0, 35.0),
-        'EA': (-16.0, 20.0, 15.0, 52.0),
+        'EA': (-16.0, 18.0, 21.0, 52.0),
         # Pan Africa: 60 S to 60 N, 60 W to 90 E.
         'PA': (-60.0, -60.0, 60.0, 90.0),
     }
