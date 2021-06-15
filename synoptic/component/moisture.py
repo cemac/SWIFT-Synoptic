@@ -29,6 +29,9 @@ class MidlevelDryIntrusion(SynopticComponent):
 
         self.marker_thres = 0.8
 
+        self.label_contours = False
+        self.label_units = '%%'
+
         # Formatting options
         self.options = {
             'linewidths': [self.lw],
@@ -52,7 +55,8 @@ class MidlevelDryIntrusion(SynopticComponent):
         ctr = ax.contour(self.lon, self.lat, rh,
                          levels=self.levels,
                          **self.options)
-        # ax.clabel(ctr, fmt = '%1.0f')
+        if self.label_contours:
+            ax.clabel(ctr, fmt='%1.0f'+self.label_units)
 
         # Draw short line at right angles to line segments to indicate
         # dry side of contour
