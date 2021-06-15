@@ -28,6 +28,7 @@ class GFSComponent(SynopticComponent):
         self.cm_thres = None
         self.cm_alpha = None
         self.cm_range = [0, 1]
+        self.label_units = ''
 
         super().__init__(chart)
         self.level = level
@@ -74,7 +75,7 @@ class GFSComponent(SynopticComponent):
                 ctr = ax.contour(self.lon, self.lat, z,
                                  **self.options)
 
-            ax.clabel(ctr, fmt='%1.0f')
+            ax.clabel(ctr, fmt='%1.0f'+self.label_units)
 
 
 class CAPE(GFSComponent):
@@ -174,6 +175,7 @@ class DPT(GFSComponent):
         self.smooth = True
 
         self.levels = [15.0]
+        self.label_units = '\N{DEGREE SIGN}C'
 
         # Formatting options
         self.color_val = 'firebrick'
