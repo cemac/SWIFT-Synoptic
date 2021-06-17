@@ -494,7 +494,7 @@ class AfricanEasterlyJet(WindComponent):
             'linewidth': 1.0,
         }
         self.core_label_fontsize = 8.0
-        self.core_label_units = f'ms\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
+        self.core_label_units = 'ms\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
         self.core_label_options = {
             'xytext': np.array([-2, -1.25])*self.core_label_fontsize,
             'textcoords': 'offset points',
@@ -800,7 +800,7 @@ class SubtropicalJet(WindComponent):
         }
 
         self.core_label_fontsize = 8.0
-        self.core_label_units = f'ms\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
+        self.core_label_units = 'ms\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
         self.core_label_options = {
             'xytext': np.array([-2, -1.25])*self.core_label_fontsize,
             'textcoords': 'offset points',
