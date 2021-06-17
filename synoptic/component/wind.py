@@ -270,7 +270,7 @@ class WindPressureLevel(WindComponent):
         self.plot_ws = True
         self.plot_strm = True
 
-        self.density = 1.2 if self.chart.domain_name == 'EA' else 2.4
+        self.density = 0.7 if self.chart.domain_name == 'EA' else 2.4
 
         self.min_ws = 0
         self.max_ws = 50
@@ -332,7 +332,7 @@ class WindHeightLevel(WindComponent):
         self.plot_ws = True
         self.plot_strm = False
 
-        self.density = 1.2 if self.chart.domain_name == 'EA' else 2.4
+        self.density = 0.7 if self.chart.domain_name == 'EA' else 2.4
 
         self.ws_level = [15.0]
 

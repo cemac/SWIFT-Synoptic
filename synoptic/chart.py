@@ -351,12 +351,12 @@ class LowLevelChart(SynopticChart):
             self.wc_10m = WindHeightLevel(self, 10)
             self.wc_10m.plot_ws = False
             self.wc_10m.plot_strm = True
+            self.wc_10m.strm_options['color'] = '#00619e'
 
             # Streamlines at 700 hPa
             self.wc_700 = WindPressureLevel(self, 700)
             self.wc_700.plot_ws = False
             self.wc_700.strm_options['color'] = 'black'
-            self.wc_700.strm_options['linewidth'] = 0.7
 
             # Relative humidity at 700 hPa above 80%
             self.rh_700 = MidlevelDryIntrusion(self, [700], [80])
