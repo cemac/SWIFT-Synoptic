@@ -355,9 +355,14 @@ v            # Mean sea level pressure
 
             # Convergence of 10m winds
             self.wc_10m = WindHeightLevel(self, 10)
-            self.wc_10m.plot_ws = False
             self.wc_10m.plot_strm = True
             self.wc_10m.strm_options['color'] = '#00619e'
+
+            # Windspeed at 10m, 25kt = 12.86 m/s contour
+            self.wc_10m.plot_ws = True
+            self.wc_10m.ws_level = [12.86]
+            self.wc_10m.highlight = 12.86
+            self.wc_10m.lw = 1.5
 
             # Streamlines at 700 hPa
             self.wc_700 = WindPressureLevel(self, 700)

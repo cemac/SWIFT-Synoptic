@@ -335,10 +335,14 @@ class WindHeightLevel(WindComponent):
         self.density = 0.7 if self.chart.domain_name == 'EA' else 2.4
 
         self.ws_level = [15.0]
+        self.step = 5.0
+        self.lw = 1.0
+        self.label_contours = True
+        self.label_size = 10
+        self.label_units = 'm/s'  # 'ms\N{SUPERSCRIPT MINUS}\N{SUPERSCRIPT ONE}'
 
         self.options = {
-            'alpha': 0.6,
-            'linewidths': 1.6,
+            'alpha': 1.0,
             'colors': 'darkgreen',
         }
 
@@ -354,10 +358,31 @@ class WindHeightLevel(WindComponent):
         U, V, windspeed = self.get_wind_components()
 
         if self.plot_ws:
-            # Plot 10m windspeed 15 m/s contour
-            ax.contour(self.lon, self.lat, windspeed,
-                       levels=self.ws_level,
-                       **self.options)
+
+            try:
+                levels = self.ws_level
+            except AttributeError:
+                vmin = np.amin(windspeed)
+                vmax = np.amax(windspeed)
+                levels = np.arange(vmin - vmin % self.step,
+                                   vmax + self.step - vmax % self.step,
+                                   self.step)
+
+            try:
+                lw = np.array([2.0*self.lw if x == self.highlight else
+                               1.0*self.lw for x in levels])
+            except AttributeError:
+                lw = self.lw
+
+            # Plot 10m windspeed contour at specified level(s)
+            ctr = ax.contour(self.lon, self.lat, windspeed,
+                             levels=levels,
+                             linewidths=lw,
+                             **self.options)
+
+            if self.label_contours:
+                ax.clabel(ctr, fmt='%1.0f'+self.label_units,
+                          fontsize=self.label_size)
 
         if self.plot_strm:
 
