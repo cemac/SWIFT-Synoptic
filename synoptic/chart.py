@@ -344,7 +344,7 @@ class LowLevelChart(SynopticChart):
             self.wc_10m = WindHeightLevel(self, 10)
 
         elif self.domain_name == 'EA':
-v            # Mean sea level pressure
+            # Mean sea level pressure
             self.mslp = MeanSeaLevelPressure(self)
             self.mslp.lw = 2.0
             self.mslp.highlight = 1012
