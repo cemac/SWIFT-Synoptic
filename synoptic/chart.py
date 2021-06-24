@@ -248,6 +248,10 @@ class SynopticChart:
             # add each component to plot
             c.plot(ax)
 
+        lat_min, lon_min, lat_max, lon_max = self.domain
+        ax.set_xlim(lon_min, lon_max)
+        ax.set_ylim(lat_min, lat_max)
+
         if dir_path is not None:
             file_name = ('{:%Y%m%d_%H%M}_{:03d}_{}_{}.png'
                          .format(self.date(), self.fct_hour,
