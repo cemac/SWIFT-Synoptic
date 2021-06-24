@@ -2,6 +2,7 @@ import math
 import warnings
 
 import numpy as np
+import iris.util
 import skimage.measure
 import shapely.geometry as sgeom
 import matplotlib.patches as mpatches
@@ -971,3 +972,92 @@ class AfricanEasterlyWaves(WindComponent):
             if (m_iy.ptp() < (self.mask_min_size - 1)):
                 mask[m_iy, m_ix] = True
         return np.ma.masked_where(mask, data)
+
+
+class MonsoonTrough(WindComponent):
+    """
+    Monsoon trough
+
+    Line of maximum vorticity at 850 hPa
+    """
+
+    def __init__(self, chart, level=850):
+        super().__init__(chart, level)
+
+    def init(self):
+        self.name = "Monsoon Trough"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
+        self.thres = 6*10**-5
+
+        self.cm_name = 'Reds'
+        self.cm_thres = [self.thres, None]
+
+        self.options = {
+            # 'alpha': 0.6,
+            # 'linewidths': 1.6,
+            # 'colors': 'darkred',
+            'cmap': self.cm_name,
+        }
+
+    def plot(self, ax):
+
+        # Get global u/v wind data
+        ug, vg = self.chart.get_data(self.gfs_vars, apply_domain=False)
+
+        # Get level coordinates for U/V wind components
+        ug_lv_coord = gfs_utils.get_level_coord(ug, self.level_units)
+        vg_lv_coord = gfs_utils.get_level_coord(vg, self.level_units)
+
+        # Constrain to specified level(s)
+        ugc = gfs_utils.get_coord_constraint(ug_lv_coord.name(), self.level)
+        ug = ug.extract(ugc)
+
+        vgc = gfs_utils.get_coord_constraint(vg_lv_coord.name(), self.level)
+        vg = vg.extract(vgc)
+
+        # Apply smoothing
+        ug_data = wrf_smooth2d(ug.data, 6)
+        ug.data = ug_data.data
+        vg_data = wrf_smooth2d(vg.data, 6)
+        vg.data = vg_data.data
+
+        # Set up windspharm wind vector object
+        w = VectorWind(ug, vg)
+        xi = w.vorticity()
+        div = w.divergence()
+
+        # Constrain to specified domain
+        domain_constraint = gfs_utils.get_domain_constraint(self.chart.domain)
+        xi = xi.extract(domain_constraint)
+        div = div.extract(domain_constraint)
+
+        # Calculate strain S following Schielicke et al 2016
+        u_x, u_y = w.gradient(ug)
+        v_x, v_y = w.gradient(vg)
+
+        D_h = u_x + v_y  # horizontal divergence
+        Def = u_x - v_y  # stretching deformation
+        Def_s = u_y + v_x  # shearing deformation
+
+        ss = D_h**2 + Def**2 + Def_s**2
+        ss = ss.extract(domain_constraint)
+
+        S = np.sqrt(ss.data)/math.sqrt(2)
+
+        # Okubo-Weiss parameter
+        # vorticity - (div + strain)
+        okw = (div + S) - xi
+
+        # Set mask to inspect O-W parameter in relevant region i.e. < 20N
+        self.set_coord_mask(lat_max=20)
+
+        # Define mask for O-W parameter
+        mask = self.coord_mask | (okw.data < self.thres)
+
+        # Apply mask
+        okw_masked = iris.util.mask_cube(okw, mask)
+
+        ax.contourf(self.lon, self.lat, okw_masked.data, **self.options)

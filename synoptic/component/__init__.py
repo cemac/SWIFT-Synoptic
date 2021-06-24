@@ -3,6 +3,7 @@ from .wind import (
     WindPressureLevel, WindHeightLevel, WindShear,
     AfricanEasterlyJet, TropicalEasterlyJet, SubtropicalJet,
     AfricanEasterlyWaves,
+    MonsoonTrough,
 )
 from .moisture import (
     MidlevelDryIntrusion, MoistureDepth,

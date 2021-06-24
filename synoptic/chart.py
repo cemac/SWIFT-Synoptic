@@ -441,7 +441,8 @@ class WAJetsWaves(SynopticChart):
         self.md = MoistureDepth(self)
         self.md.cm_alpha = 0.6
 
-        #self.mt = MonsoonTrough(self)
+        # Monsoon Trough
+        self.mt = MonsoonTrough(self)
 
 
 class ConvectiveChart(SynopticChart):
