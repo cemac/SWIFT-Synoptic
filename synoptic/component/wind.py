@@ -30,7 +30,7 @@ class WindComponent(SynopticComponent):
     """
 
     def __init__(self, chart, level):
-        super().__init__(chart)
+        super().__init__(chart, level)
         self.level = level
 
     def get_wind_components(self, **kwargs):
@@ -47,11 +47,17 @@ class WindComponent(SynopticComponent):
         v_lv_coord = gfs_utils.get_level_coord(v, self.level_units)
 
         # Constrain to specified level(s)
-        uc = gfs_utils.get_coord_constraint(u_lv_coord.name(), level)
-        u = u.extract(uc)
+        try:
+            uc = gfs_utils.get_coord_constraint(u_lv_coord.name(), level)
+            u = u.extract(uc)
+        except AttributeError:
+            pass
 
-        vc = gfs_utils.get_coord_constraint(v_lv_coord.name(), level)
-        v = v.extract(vc)
+        try:
+            vc = gfs_utils.get_coord_constraint(v_lv_coord.name(), level)
+            v = v.extract(vc)
+        except AttributeError:
+            pass
 
         def handle_error(lvl, units):
             err_msg = f'''Could not extract wind component data for
@@ -63,10 +69,15 @@ class WindComponent(SynopticComponent):
             V = []
             windspeed = []
             for lvl in level:
-                ucc = gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl)
-                vcc = gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl)
-                ui = u.extract(ucc)
-                vi = v.extract(vcc)
+                try:
+                    ucc = gfs_utils.get_coord_constraint(u_lv_coord.name(), lvl)
+                    vcc = gfs_utils.get_coord_constraint(v_lv_coord.name(), lvl)
+                    ui = u.extract(ucc)
+                    vi = v.extract(vcc)
+                except AttributeError:
+                    ui = u
+                    vi = v
+
                 try:
                     Ui = ui.data.astype(np.float64)
                     Vi = vi.data.astype(np.float64)

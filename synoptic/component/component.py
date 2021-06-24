@@ -57,10 +57,20 @@ class SynopticComponent:
         if level is not None:
             self.level = level
             # Constrain data to specified level(s)
-            lv_coord = gfs_utils.get_level_coord(self.data, self.level_units)
-            self.level_coord = lv_coord.name()
-            cc = gfs_utils.get_coord_constraint(self.level_coord, self.level)
-            self.data = self.data.extract(cc)
+            if isinstance(self.data, iris.cube.CubeList):
+                cube_list = []
+                self.level_coord = []
+                for cube in self.data:
+                    lv_coord = gfs_utils.get_level_coord(cube, self.level_units)
+                    self.level_coord.append(lv_coord.name())
+                    cc = gfs_utils.get_coord_constraint(lv_coord.name(), self.level)
+                    cube_list.append(cube.extract(cc))
+                self.data = iris.cube.CubeList(cube_list)
+            else:
+                lv_coord = gfs_utils.get_level_coord(self.data, self.level_units)
+                self.level_coord = lv_coord.name()
+                cc = gfs_utils.get_coord_constraint(self.level_coord, self.level)
+                self.data = self.data.extract(cc)
         # self.backend = chart.get_backend()
         coords = ('latitude', 'longitude')
         if isinstance(self.data, iris.cube.CubeList):
