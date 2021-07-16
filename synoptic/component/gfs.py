@@ -95,6 +95,7 @@ class CAPE(GFSComponent):
 
         self.plot_fill = True
         self.thres_min = 1200
+        self.thres_max = 2000
 
         # Formatting options
         self.lw = 2.0
@@ -102,8 +103,9 @@ class CAPE(GFSComponent):
         self.color_var = 'cmap'
         self.color_val = 'Blues'
 
-        self.cm_thres = [self.thres_min, None]
-        # self.cm_range = [ 0.45, 1 ]
+        self.cm_thres = [self.thres_min, self.thres_max]
+        self.cm_range = [0.0, 1.0]
+        self.cm_alpha = 0.7
 
 
 class CIN(GFSComponent):

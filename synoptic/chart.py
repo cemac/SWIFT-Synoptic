@@ -484,20 +484,26 @@ class ConvectiveChart(SynopticChart):
 
         self.chart_type = "convective"
 
+        # Low pressure level suitable to domain
+        if self.domain_name == 'WA':
+            plvl = 925
+        elif self.domain_name == 'EA':
+            plvl = 700
+
         #self.pwat = PWAT(self)
         self.md = MoistureDepth(self)
         self.cape = CAPE(self)
         self.cin = CIN(self)
 
-        # Inter-tropical discontinuity
-        self.itd = ITD(self)
+        if self.domain_name == 'WA':
+            # Inter-tropical discontinuity
+            self.itd = ITD(self)
 
-        # Low level convergence - infer from streamlines?
-        # Windspeed and streamlines at 925 hPa
-        self.wc_925 = WindPressureLevel(self, 925)
-        self.wc_925.plot_ws = False
-        self.wc_925.strm_options['color'] = 'black'
-        self.wc_925.strm_options['linewidth'] = 0.7
+        # Streamlines at level suitable to domain
+        self.wind = WindPressureLevel(self, plvl)
+        self.wind.plot_ws = False
+        self.wind.strm_options['color'] = 'black'
+        self.wind.strm_options['linewidth'] = 0.7
 
         # 24 hour change in mean sea level pressure
         self.mslp_24 = MeanSeaLevelPressureChange(self)
@@ -508,14 +514,20 @@ class ConvectiveChart(SynopticChart):
         # min(RH700, RH600, RH500)
         self.mdi = MidlevelDryIntrusion(self)
 
-        # African Easterly Jet
-        self.aej = AfricanEasterlyJet(self, 600)
-        self.aej.ws_options['alpha'] = 0.01
+        if self.domain_name == 'WA':
+            # African Easterly Jet
+            self.aej = AfricanEasterlyJet(self, 600)
+            self.aej.ws_options['alpha'] = 0.01
 
-        # 925-650hPa wind shear
-        self.ws_925_650 = WindShear(self, 925, 650)
-        self.ws_925_650.ws_thres = 15
-        self.ws_925_650.qv_options['alpha'] = 0.3
+        if self.domain_name == 'WA':
+            # 925-650hPa wind shear
+            self.ws_925_650 = WindShear(self, 925, 650)
+            self.ws_925_650.ws_thres = 15
+            self.ws_925_650.qv_options['alpha'] = 0.3
+        elif self.domain_name == 'EA':
+            # 10m windspeed - 650 hPa windspeed divided by pressure
+            # difference
+            pass
 
 
 class SynthesisChart(SynopticChart):
