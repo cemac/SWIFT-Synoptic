@@ -108,12 +108,16 @@ class MeanSeaLevelPressureChange(MeanSeaLevelPressure):
 
         delta_mslp = self.data.data - mslp_m24.data
 
-        dp_min = np.amin(delta_mslp)
-        dp_max = np.amax(delta_mslp)
-        levels = np.arange(dp_min - dp_min % self.step,
-                           dp_max + self.step - dp_max % self.step,
-                           self.step)
-        levels = np.delete(levels, np.argwhere(np.abs(levels) <= self.thres))
+        try:
+            levels = np.array(self.levels)
+        except AttributeError:
+            dp_min = np.amin(delta_mslp)
+            dp_max = np.amax(delta_mslp)
+            levels = np.arange(dp_min - dp_min % self.step,
+                               dp_max + self.step - dp_max % self.step,
+                               self.step)
+            levels = np.delete(levels,
+                               np.argwhere(np.abs(levels) <= self.thres))
         linestyles = np.where(levels < 0, '--', '-')
 
         ctr = ax.contour(self.lon, self.lat, delta_mslp,

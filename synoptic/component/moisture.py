@@ -27,7 +27,8 @@ class MidlevelDryIntrusion(SynopticComponent):
 
         self.lw = 3.0
 
-        self.marker_thres = 0.8
+        self.marker_thres = 0.8  # spacing between markers
+        self.marker_scale = 0.33  # length of marker
 
         self.label_contours = False
         self.label_units = '%%'
@@ -51,8 +52,12 @@ class MidlevelDryIntrusion(SynopticComponent):
         # Apply smoothing
         rh = wrf_smooth2d(rh, 4)
 
+        # Mask data outside bounding box for Africa
+        self.set_coord_mask(lon_min=-25, lon_max=56, lat_min=-40, lat_max=40)
+        rh_masked = np.ma.masked_where(self.coord_mask, rh)
+
         # Plot relative humidity contours
-        ctr = ax.contour(self.lon, self.lat, rh,
+        ctr = ax.contour(self.lon, self.lat, rh_masked,
                          levels=self.levels,
                          **self.options)
         if self.label_contours:
@@ -77,7 +82,7 @@ class MidlevelDryIntrusion(SynopticComponent):
                         start = s + loc*np.array([dx, dy])
                         # Find end point for marker
                         v = np.array([-dy, dx])
-                        end = start + 0.33*v/np.linalg.norm(v)
+                        end = start + self.marker_scale*v/np.linalg.norm(v)
                         # Draw path
                         pth = mpath.Path([start, end])
                         line = mpatches.PathPatch(pth,
@@ -85,6 +90,7 @@ class MidlevelDryIntrusion(SynopticComponent):
                                                   linewidth=1.4*self.lw,
                                                   capstyle='butt')
                         ax.add_patch(line)
+
 
 class MoistureDepth(SynopticComponent):
     """

@@ -390,15 +390,24 @@ class LowLevelChart(SynopticChart):
             # Mean sea level pressure
             self.mslp = MeanSeaLevelPressure(self)
             self.mslp.lw = 1.0
-            self.mslp.label_size = 12
 
             # Plot MSLP at specified levels
             self.mslp.levels = [960, 980, 990, 1000, 1004, 1008, 1012,
                                 1016, 1020, 1024, 1028, 1032, 1036, 1040]
             self.mslp.highlight = 1020
 
+            # 24 hour change in mean sea level pressure
+            self.mslp_24 = MeanSeaLevelPressureChange(self)
+            self.mslp_24.levels = [-12.0, -8.0, -4.0, -2.0,
+                                   2.0, 4.0, 8.0, 12.0, 16.0, 20.0]
+
             # Windspeed and streamlines at 925 hPa
             self.wc_925 = WindPressureLevel(self, 925)
+
+            # Mid level dry intrusion
+            self.mdi = MidlevelDryIntrusion(self)
+            self.mdi.marker_thres = 2.0
+            self.mdi.marker_scale = 1.0
 
 
 class WAJetsWaves(SynopticChart):

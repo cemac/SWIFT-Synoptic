@@ -136,6 +136,22 @@ class SynopticComponent:
 
         return mc.ListedColormap(cmap)
 
+    def set_coord_mask(self, lat_min=None, lat_max=None, lon_min=None,
+                       lon_max=None):
+        """
+        Define mask to specify relevant regions
+        """
+        lon_grid, lat_grid = np.meshgrid(self.lon, self.lat)
+        self.coord_mask = np.zeros_like(lat_grid, dtype=bool)
+        if lat_min is not None:
+            self.coord_mask |= (lat_grid < lat_min)
+        if lat_max is not None:
+            self.coord_mask |= (lat_grid > lat_max)
+        if lon_min is not None:
+            self.coord_mask |= (lon_grid < lon_min)
+        if lon_max is not None:
+            self.coord_mask |= (lon_grid > lon_max)
+
 
 #---------------------------------------------------------------
 
