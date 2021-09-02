@@ -543,36 +543,73 @@ class SynthesisChart(SynopticChart):
 
         self.chart_type = "synthesis"
 
-        # Inter-tropical discontinuity
-        self.itd = ITD(self)
+        # Low pressure level suitable to domain
+        if self.domain_name == 'WA':
+            plvl = 925
+        elif self.domain_name == 'EA':
+            plvl = 700
 
-        # African Easterly Jet
-        self.aej = AfricanEasterlyJet(self, 600)
-        self.aej.plot_ws = False
+        if self.domain_name == 'WA':
 
-        # African Easterly Waves
-        self.aew = AfricanEasterlyWaves(self)
+            # Inter-tropical discontinuity
+            self.itd = ITD(self)
 
-        # Windspeed and streamlines at 925 hPa
-        self.wc_925 = WindPressureLevel(self, 925)
-        self.wc_925.plot_ws = False
-        self.wc_925.strm_options['color'] = 'black'
-        self.wc_925.strm_options['linewidth'] = 0.7
+            # African Easterly Jet
+            self.aej = AfricanEasterlyJet(self, 600)
+            self.aej.plot_ws = False
+
+            # African Easterly Waves
+            self.aew = AfricanEasterlyWaves(self)
+
+        elif self.domain_name == 'EA':
+
+            # Convergence of 10m winds
+            self.wc_10m = WindHeightLevel(self, 10)
+            self.wc_10m.plot_strm = True
+            self.wc_10m.strm_options['color'] = '#00619e'
+
+        # Streamlines at level suitable to domain
+        self.wind = WindPressureLevel(self, plvl)
+        self.wind.plot_ws = False
+        self.wind.strm_options['color'] = 'black'
+        self.wind.strm_options['linewidth'] = 0.7
+
+        # 24 hour change in mean sea level pressure
+        self.mslp_24 = MeanSeaLevelPressureChange(self)
 
         # Mid-level dry intrusion - defaults to 60% contour of
         # min(RH700, RH600, RH500)
         self.mdi = MidlevelDryIntrusion(self)
 
-        # 925-650hPa wind shear
-        self.ws_925_650 = WindShear(self, 925, 650)
+        if self.domain_name == 'WA':
 
-        # Tropical Easterly Jet
-        self.tej = TropicalEasterlyJet(self)
+            # 925-650hPa wind shear
+            self.ws_925_650 = WindShear(self, 925, 650)
 
-        # Subtropical Jet
-        self.stj = SubtropicalJet(self)
+            # Tropical Easterly Jet
+            self.tej = TropicalEasterlyJet(self)
 
-#---------------------------------------------------------------
+            # Subtropical Jet
+            self.stj = SubtropicalJet(self)
+
+            # Monsoon Trough
+            #self.mt = MonsoonTrough(self)
+
+        elif self.domain_name == 'EA':
+
+            # Relative humidity at 700 hPa above 80%
+            self.rh_700 = MidlevelDryIntrusion(self, [700], [80])
+            self.rh_700.options['colors'] = '#00c7ff'
+            self.rh_700.options['linewidths'] = [2.0]
+            self.rh_700.label_contours = True
+
+            #self.md = MoistureDepth(self)
+
+            self.cape = CAPE(self)
+
+
+# ---------------------------------------------------------------
+
 
 def parse_args():
     formatter = argparse.RawDescriptionHelpFormatter
