@@ -173,4 +173,6 @@ class MoistureDepth(SynopticComponent):
 
         ctr = ax.contour(self.lon, self.lat, md.data,
                          **self.options)
-        ax.clabel(ctr, fmt='%1.0f')
+
+        label_levels = ctr.levels[ctr.levels > self.cm_thres[0]]
+        ax.clabel(ctr, fmt='%1.0f', colors='#02682b', levels=label_levels)
