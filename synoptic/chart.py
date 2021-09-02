@@ -375,7 +375,6 @@ class LowLevelChart(SynopticChart):
 
             # Relative humidity at 700 hPa above 80%
             self.rh_700 = MidlevelDryIntrusion(self, [700], [80])
-            self.rh_700.marker_thres = 1000
             self.rh_700.options['colors'] = '#00c7ff'
             self.rh_700.options['linewidths'] = [2.0]
             self.rh_700.label_contours = True
