@@ -492,6 +492,15 @@ class ConvectiveChart(SynopticChart):
         #self.pwat = PWAT(self)
         self.md = MoistureDepth(self)
         self.cape = CAPE(self)
+        if self.domain_name == 'WA':
+            self.cape.plot_fill = True
+            self.cape.cm_alpha = 0.7
+            self.cape.cm_thres = [900, None]
+            self.cape.cm_range = [0, 0.5]
+            self.cape.cm_name = 'twilight'
+            self.cape.label_fill = True
+            self.cape.label_col = '#5a3397'
+            #self.cape.levels = [900, 1400, 1900]
         self.cin = CIN(self)
 
         if self.domain_name == 'WA':

@@ -21,10 +21,12 @@ class GFSComponent(SynopticComponent):
     def __init__(self, chart, level):
         self.smooth = None
         self.plot_fill = False
+        self.label_fill = False
         self.levels = None
         self.lw = 1.0
         self.ls = 'solid'
         self.color_var = 'colors'
+        self.label_col = 'black'
         self.cm_thres = None
         self.cm_alpha = None
         self.cm_range = [0, 1]
@@ -64,8 +66,16 @@ class GFSComponent(SynopticComponent):
             pass
 
         if self.plot_fill:
-            ctr = ax.contourf(self.lon, self.lat, z,
-                              **self.options)
+            ax.contourf(self.lon, self.lat, z,
+                        **self.options)
+
+            if self.label_fill:
+                # Draw contours and label levels
+                ctr = ax.contour(self.lon, self.lat, z,
+                                 **self.options)
+                lvl = ctr.levels[ctr.levels > self.cm_thres[0]]
+                ax.clabel(ctr, fmt='%1.0f', colors=self.label_col, levels=lvl)
+
         else:
             if self.levels is not None:
                 ctr = ax.contour(self.lon, self.lat, z,
@@ -93,19 +103,22 @@ class CAPE(GFSComponent):
         self.units = 'J kg-1'
         self.level_units = ''
 
-        self.plot_fill = True
-        self.thres_min = 1200
+        self.levels = [1200, 1600, 2000]
+
+        self.plot_fill = False
+        self.thres_min = 900
         self.thres_max = 2000
 
         # Formatting options
         self.lw = 2.0
 
         self.color_var = 'cmap'
-        self.color_val = 'Blues'
+        self.color_val = 'twilight_shifted'
 
-        self.cm_thres = [self.thres_min, self.thres_max]
-        self.cm_range = [0.0, 1.0]
-        self.cm_alpha = 0.7
+        #self.cm_thres = [self.thres_min, self.thres_max]
+        #self.cm_range = [0.57, 0.8]
+        self.cm_range = [0.75, 1.0]
+        #self.cm_alpha = 0.7
 
 
 class CIN(GFSComponent):
