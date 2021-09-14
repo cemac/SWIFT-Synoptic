@@ -558,6 +558,9 @@ class SynthesisChart(SynopticChart):
         elif self.domain_name == 'EA':
             plvl = 700
 
+        # Moisture Depth
+        self.md = MoistureDepth(self)
+
         if self.domain_name == 'WA':
 
             # Inter-tropical discontinuity
@@ -611,8 +614,6 @@ class SynthesisChart(SynopticChart):
             self.rh_700.options['colors'] = '#00c7ff'
             self.rh_700.options['linewidths'] = [2.0]
             self.rh_700.label_contours = True
-
-            #self.md = MoistureDepth(self)
 
             self.cape = CAPE(self)
 
