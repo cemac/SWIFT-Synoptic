@@ -501,6 +501,8 @@ class ConvectiveChart(SynopticChart):
             self.cape.label_fill = True
             self.cape.label_col = '#5a3397'
             #self.cape.levels = [900, 1400, 1900]
+        elif self.domain_name == 'EA':
+            self.cape.levels = [1000, 2000, 3000]
         self.cin = CIN(self)
 
         if self.domain_name == 'WA':
@@ -616,6 +618,7 @@ class SynthesisChart(SynopticChart):
             self.rh_700.label_contours = True
 
             self.cape = CAPE(self)
+            self.cape.levels = [1000, 2000, 3000]
 
 
 # ---------------------------------------------------------------
