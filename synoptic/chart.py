@@ -483,14 +483,16 @@ class ConvectiveChart(SynopticChart):
 
         self.chart_type = "convective"
 
-        # Low pressure level suitable to domain
+        # Low pressure levels suitable to domain
         if self.domain_name == 'WA':
             plvl = 925
+            mdlvl = 850
         elif self.domain_name == 'EA':
             plvl = 700
+            mdlvl = 800
 
         #self.pwat = PWAT(self)
-        self.md = MoistureDepth(self)
+        self.md = MoistureDepth(self, mdlvl)
         self.cape = CAPE(self)
         if self.domain_name == 'WA':
             self.cape.plot_fill = True
@@ -557,13 +559,15 @@ class SynthesisChart(SynopticChart):
         # Low pressure level suitable to domain
         if self.domain_name == 'WA':
             plvl = 925
+            mdlvl = 850
         elif self.domain_name == 'EA':
             plvl = 700
-
-        # Moisture Depth
-        self.md = MoistureDepth(self)
+            mdlvl = 800
 
         if self.domain_name == 'WA':
+
+            # Moisture Depth
+            self.md = MoistureDepth(self, mdlvl)
 
             # Inter-tropical discontinuity
             self.itd = ITD(self)
