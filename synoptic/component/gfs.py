@@ -113,11 +113,11 @@ class CAPE(GFSComponent):
         self.lw = 2.0
 
         self.color_var = 'cmap'
-        self.color_val = 'twilight_shifted'
+        self.color_val = 'BrBG'
 
         #self.cm_thres = [self.thres_min, self.thres_max]
         #self.cm_range = [0.57, 0.8]
-        self.cm_range = [0.75, 1.0]
+        self.cm_range = [0.85, 1.0]
         #self.cm_alpha = 0.7
 
 

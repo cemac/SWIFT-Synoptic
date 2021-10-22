@@ -98,14 +98,14 @@ class MoistureDepth(SynopticComponent):
 
     """
 
-    def __init__(self, chart):
-        super().__init__(chart)
+    def __init__(self, chart, level=850):
+        super().__init__(chart, level)
 
     def init(self):
         self.name = "Moisture depth"
-        self.gfs_vars = SynopticComponent.GFS_VARS['pwat']
-        self.units = 'kg m-2'
-        self.level_units = ''
+        self.gfs_vars = SynopticComponent.GFS_VARS['temp']
+        self.units = 'K'
+        self.level_units = 'hPa'
 
         self.lw = 1.0
 
@@ -125,24 +125,18 @@ class MoistureDepth(SynopticComponent):
 
     def plot(self, ax):
 
-        # Precipitable water
-        pw = self.data
-
-        temp = self.chart.get_data(self.GFS_VARS['temp'])
-
-        # Constrain data to specified level(s)
-        lv_coord = gfs_utils.get_level_coord(temp, 'hPa')
-        cc = gfs_utils.get_coord_constraint(lv_coord.name(), 850)
-
         # Temp in K
-        temp_850 = temp.extract(cc)
+        temp_K = self.data.data
 
         # Temp in Celsius for use in Teten's formula
-        temp_850_C = temp.extract(cc)
-        temp_850_C.convert_units('Celsius')
+        self.data.convert_units('Celsius')
+        temp_C = self.data.data
+
+        # Precipitable water
+        pw = self.chart.get_data(self.GFS_VARS['pwat']).data
 
         # Geopotential height (at surface?)
-        sh = self.chart.get_data(self.GFS_VARS['hgt'])
+        sh = self.chart.get_data(self.GFS_VARS['hgt']).data
 
         # Using MD calculation from Alex's code
 
@@ -154,14 +148,14 @@ class MoistureDepth(SynopticComponent):
         # NB Correction to Alex's version: use temperature in Celsius
         # in denominator of SVP term
 
-        svp = (6.11*10.0**((7.5*temp_850_C.data)/(237.3+temp_850_C.data)))*100
+        svp = (6.11*10.0**((7.5*temp_C)/(237.3+temp_C)))*100
 
         # SVD = SVP / (R * T) # R is gas constant for 1kg water
         # vapour, T is temperature in Kelvin
-        svd = svp/(461.5*temp_850.data)
+        svd = svp/(461.5*temp_K)
 
         # MD = Z + PW/SVD  # Z is geopotential height (at surface?)
-        md = sh.data + pw.data/svd
+        md = sh + pw/svd
 
         # Set up colour map
         self.options['cmap'] = self.get_masked_colormap(val_max=np.amax(md),

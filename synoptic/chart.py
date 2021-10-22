@@ -427,34 +427,78 @@ class WAJetsWaves(SynopticChart):
     def __init__(self, domain, fct_timestamp, fct_hour, data_dir=None):
         super().__init__(domain, fct_timestamp, fct_hour, data_dir)
 
-        self.chart_type = "WA-jets-waves"
+        if self.domain_name == 'WA':
 
-        self.aej = AfricanEasterlyJet(self, 600)
-        #`self.aej.plot_ws = False
-        self.aej.ws_options['alpha'] = 0.01
+            self.chart_type = "WA-jets-waves"
 
-        # Windspeed and streamlines at 600 hPa for diagnosis of AEWs
-        # self.wc_600 = WindPressureLevel(self, 600)
-        # self.wc_600.plot_ws = False
-        # self.wc_600.strm_options['color'] = 'black'
-        # self.wc_600.strm_options['linewidth'] = 0.7
+            self.aej = AfricanEasterlyJet(self, 600)
+            #self.aej.plot_ws = False
+            self.aej.ws_options['alpha'] = 0.01
 
-        # Tropical Easterly Jet
-        self.tej100 = TropicalEasterlyJet(self, 100)
-        self.tej200 = TropicalEasterlyJet(self, 200)
+            # Windspeed and streamlines at 600 hPa for diagnosis of AEWs
+            # self.wc_600 = WindPressureLevel(self, 600)
+            # self.wc_600.plot_ws = False
+            # self.wc_600.strm_options['color'] = 'black'
+            # self.wc_600.strm_options['linewidth'] = 0.7
 
-        # Subtropical Jet
-        self.stj = SubtropicalJet(self)
+            # Tropical Easterly Jet
+            self.tej100 = TropicalEasterlyJet(self, 100)
+            self.tej200 = TropicalEasterlyJet(self, 200)
 
-        # African Easterly Waves
-        self.aew = AfricanEasterlyWaves(self)
+            # Subtropical Jet
+            self.stj = SubtropicalJet(self)
 
-        # Moisture depth
-        self.md = MoistureDepth(self)
-        self.md.cm_alpha = 0.6
+            # African Easterly Waves
+            self.aew = AfricanEasterlyWaves(self)
 
-        # Monsoon Trough
-        self.mt = MonsoonTrough(self)
+            # Moisture depth
+            self.md = MoistureDepth(self)
+            self.md.cm_alpha = 0.6
+
+            # Monsoon Trough
+            self.mt = MonsoonTrough(self)
+
+        elif self.domain_name == 'EA':
+            self.chart_type = "winds"
+
+            # Convergence of 10m winds
+            self.wc_10m = WindHeightLevel(self, 10)
+            self.wc_10m.plot_strm = True
+            self.wc_10m.strm_options['color'] = '#00619e'
+
+            # Streamlines at 300 hPa
+            self.wc_300 = WindPressureLevel(self, 300)
+            self.wc_300.plot_ws = False
+            self.wc_300.strm_options['color'] = '#aa0000'
+
+            # Streamlines at 700 hPa
+            self.wc_700 = WindPressureLevel(self, 700)
+            self.wc_700.plot_ws = False
+            self.wc_700.strm_options['color'] = 'black'
+
+            # Upper level convergence/divergence
+            self.div = Divergence(self, 300)
+
+        elif self.domain_name == 'PA':
+            self.chart_type = "winds"
+
+            # Streamlines at 925 hPa
+            self.wc_925 = WindPressureLevel(self, 925)
+            self.wc_925.plot_ws = False
+
+            # Streamlines at 300 hPa
+            self.wc_300 = WindPressureLevel(self, 300)
+            self.wc_300.strm_options['color'] = '#aa0000'
+            self.wc_300.thres_ws = 51.44  # = 100 kt
+            self.wc_300.cm_name = 'Reds'
+
+            # Upper level convergence/divergence
+            self.div = Divergence(self, 300)
+
+            # Sub-tropical Jet at 200 hPa
+            self.stj = SubtropicalJet(self)
+            self.stj.arrow_size = 0.6
+            self.stj.arrow_interval = 6.0
 
 
 class ConvectiveChart(SynopticChart):
@@ -483,14 +527,16 @@ class ConvectiveChart(SynopticChart):
 
         self.chart_type = "convective"
 
-        # Low pressure level suitable to domain
+        # Low pressure levels suitable to domain
         if self.domain_name == 'WA':
             plvl = 925
+            mdlvl = 850
         elif self.domain_name == 'EA':
             plvl = 700
+            mdlvl = 800
 
         #self.pwat = PWAT(self)
-        self.md = MoistureDepth(self)
+        self.md = MoistureDepth(self, mdlvl)
         self.cape = CAPE(self)
         if self.domain_name == 'WA':
             self.cape.plot_fill = True
@@ -501,6 +547,8 @@ class ConvectiveChart(SynopticChart):
             self.cape.label_fill = True
             self.cape.label_col = '#5a3397'
             #self.cape.levels = [900, 1400, 1900]
+        elif self.domain_name == 'EA':
+            self.cape.levels = [1000, 2000, 3000]
         self.cin = CIN(self)
 
         if self.domain_name == 'WA':
@@ -555,13 +603,15 @@ class SynthesisChart(SynopticChart):
         # Low pressure level suitable to domain
         if self.domain_name == 'WA':
             plvl = 925
+            mdlvl = 850
         elif self.domain_name == 'EA':
             plvl = 700
-
-        # Moisture Depth
-        self.md = MoistureDepth(self)
+            mdlvl = 800
 
         if self.domain_name == 'WA':
+
+            # Moisture Depth
+            self.md = MoistureDepth(self, mdlvl)
 
             # Inter-tropical discontinuity
             self.itd = ITD(self)
@@ -616,6 +666,7 @@ class SynthesisChart(SynopticChart):
             self.rh_700.label_contours = True
 
             self.cape = CAPE(self)
+            self.cape.levels = [1000, 2000, 3000]
 
 
 # ---------------------------------------------------------------

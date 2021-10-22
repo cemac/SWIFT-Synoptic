@@ -6,6 +6,7 @@ import iris.util
 import skimage.measure
 import shapely.geometry as sgeom
 import matplotlib.patches as mpatches
+from matplotlib import colors as mcolors
 from matplotlib.path import Path
 from windspharm.iris import VectorWind
 from wrf import smooth2d as wrf_smooth2d
@@ -390,6 +391,75 @@ class WindHeightLevel(WindComponent):
             # Plot streamlines
             ax.streamplot(self.lon, self.lat, U, V,
                           **self.strm_options)
+
+
+class Divergence(WindComponent):
+    """
+    Divergence
+
+    """
+
+    def __init__(self, chart, level=650):
+        super().__init__(chart, level)
+
+    def init(self):
+        self.name = "Divergence"
+        self.gfs_vars = [SynopticComponent.GFS_VARS.get(x)
+                         for x in ('u_lvp', 'v_lvp')]
+        self.units = None
+        self.level_units = 'hPa'
+
+        # Threshold absolute value for masking
+        self.thres = 1e-05
+
+        self.cm_name = 'PRGn'
+        self.cm_thres = [None, None]
+
+        self.options = {
+            'alpha': 0.6,
+            'cmap': self.cm_name,
+        }
+
+    def plot(self, ax):
+
+        # Get global u/v wind data
+        ug, vg = self.chart.get_data(self.gfs_vars, apply_domain=False)
+
+        # Get level coordinates for U/V wind components
+        ug_lv_coord = gfs_utils.get_level_coord(ug, self.level_units)
+        vg_lv_coord = gfs_utils.get_level_coord(vg, self.level_units)
+
+        # Constrain to specified level(s)
+        ugc = gfs_utils.get_coord_constraint(ug_lv_coord.name(), self.level)
+        ug = ug.extract(ugc)
+
+        vgc = gfs_utils.get_coord_constraint(vg_lv_coord.name(), self.level)
+        vg = vg.extract(vgc)
+
+        # Apply smoothing
+        ug_data = wrf_smooth2d(ug.data, 6)
+        ug.data = ug_data.data
+        vg_data = wrf_smooth2d(vg.data, 6)
+        vg.data = vg_data.data
+
+        # Set up windspharm wind vector object
+        w = VectorWind(ug, vg)
+
+        # Get divergence
+        div = w.divergence()
+
+        # Constrain to specified domain
+        domain_constraint = gfs_utils.get_domain_constraint(self.chart.domain)
+        div = div.extract(domain_constraint)
+
+        # Mask absolute values below threshold
+        div_masked = np.ma.masked_where(np.abs(div.data) < self.thres, div.data)
+
+        # Set norm to match centre of colour scale to zero value
+        self.options['norm'] = mcolors.TwoSlopeNorm(vmin=np.min(div_masked),
+                                                    vcenter=0, vmax=np.max(div_masked))
+
+        ax.contourf(self.lon, self.lat, div_masked, **self.options)
 
 
 class WindShear(WindComponent):
