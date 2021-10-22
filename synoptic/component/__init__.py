@@ -4,6 +4,7 @@ from .wind import (
     AfricanEasterlyJet, TropicalEasterlyJet, SubtropicalJet,
     AfricanEasterlyWaves,
     MonsoonTrough,
+    Divergence,
 )
 from .moisture import (
     MidlevelDryIntrusion, MoistureDepth,
