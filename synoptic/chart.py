@@ -459,7 +459,7 @@ class WAJetsWaves(SynopticChart):
             self.mt = MonsoonTrough(self)
 
         elif self.domain_name == 'EA':
-            self.chart_type = "EA-winds"
+            self.chart_type = "winds"
 
             # Convergence of 10m winds
             self.wc_10m = WindHeightLevel(self, 10)
@@ -480,7 +480,7 @@ class WAJetsWaves(SynopticChart):
             self.div = Divergence(self, 300)
 
         elif self.domain_name == 'PA':
-            self.chart_type = "PA-winds"
+            self.chart_type = "winds"
 
             # Streamlines at 925 hPa
             self.wc_925 = WindPressureLevel(self, 925)
